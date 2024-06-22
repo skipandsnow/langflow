@@ -235,7 +235,7 @@ export default function Header(): JSX.Element {
                   </>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel>Help</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("Help")}</DropdownMenuLabel>
                 <DropdownMenuItem
                   className="cursor-pointer gap-2"
                   onClick={() =>
@@ -243,7 +243,7 @@ export default function Header(): JSX.Element {
                   }
                 >
                   <ForwardedIconComponent name="FileText" className="w-4" />
-                  Docs
+                  {t("Docs")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer gap-2"
@@ -258,7 +258,7 @@ export default function Header(): JSX.Element {
                     name="MessagesSquare"
                     className="w-4"
                   />
-                  Discussions
+                  {t("Discussions")}
                 </DropdownMenuItem>
                 {!autoLogin && (
                   <>
