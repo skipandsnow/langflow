@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import EditFlowSettings from "../../components/editFlowSettingsComponent";
 import IconComponent from "../../components/genericIconComponent";
-import { SETTINGS_DIALOG_SUBTITLE } from "../../constants/constants";
 import useAlertStore from "../../stores/alertStore";
 import useFlowsManagerStore from "../../stores/flowsManagerStore";
 import { FlowSettingsPropsType } from "../../types/components";
 import { FlowType } from "../../types/flow";
 import BaseModal from "../baseModal";
+import { useTranslation } from "react-i18next";
+
 
 export default function FlowSettingsModal({
   open,
@@ -19,7 +20,7 @@ export default function FlowSettingsModal({
     setName(currentFlow!.name);
     setDescription(currentFlow!.description);
   }, [currentFlow?.name, currentFlow?.description, open]);
-
+  const { t } = useTranslation();
   const [name, setName] = useState(currentFlow!.name);
   const [description, setDescription] = useState(currentFlow!.description);
   const [endpoint_name, setEndpointName] = useState(currentFlow!.endpoint_name);
@@ -61,7 +62,7 @@ export default function FlowSettingsModal({
       size="smaller-h-full"
       onSubmit={handleClick}
     >
-      <BaseModal.Header description={SETTINGS_DIALOG_SUBTITLE}>
+      <BaseModal.Header description={t("SETTINGS_DIALOG_SUBTITLE")}>
         <span className="pr-2">Settings</span>
         <IconComponent name="Settings2" className="mr-2 h-4 w-4" />
       </BaseModal.Header>

@@ -97,19 +97,19 @@ export const limitScrollFieldsModal = 10;
  * The base text for subtitle of Export Dialog (Toolbar)
  * @constant
  */
-export const EXPORT_DIALOG_SUBTITLE = "Export flow as JSON file.";
+// export const EXPORT_DIALOG_SUBTITLE = "Export flow as JSON file.";
 
 /**
  * The base text for subtitle of Flow Settings (Menubar)
  * @constant
  */
-export const SETTINGS_DIALOG_SUBTITLE = "Edit details about your project.";
+// export const SETTINGS_DIALOG_SUBTITLE = "Edit details about your project.";
 
 /**
  * The base text for subtitle of Flow Logs (Menubar)
  * @constant
  */
-export const LOGS_DIALOG_SUBTITLE = "Check out information about your flow.";
+// export const LOGS_DIALOG_SUBTITLE = "Check out information about your flow.";
 
 /**
  * The base text for subtitle of Code Dialog (Toolbar)
@@ -122,25 +122,25 @@ export const CODE_DIALOG_SUBTITLE =
  * The base text for subtitle of Chat Form
  * @constant
  */
-export const CHAT_FORM_DIALOG_SUBTITLE =
-  "Set up the input variables defined in prompt templates. Interact with agents and chains.";
+// export const CHAT_FORM_DIALOG_SUBTITLE =
+//   "Set up the input variables defined in prompt templates. Interact with agents and chains.";
 
 /**
  * The base text for subtitle of Edit Node Dialog
  * @constant
  */
-export const EDIT_DIALOG_SUBTITLE =
-  "Adjust the configurations of your component. Define parameter visibility for the canvas view. Remember to save once you’re finished.";
+// export const EDIT_DIALOG_SUBTITLE =
+//   "Adjust the configurations of your component. Define parameter visibility for the canvas view. Remember to save once you’re finished.";
 
 /**
  * The base text for subtitle of Code Dialog
  * @constant
  */
-export const CODE_PROMPT_DIALOG_SUBTITLE =
-  "Edit your Python code. This code snippet accepts module import and a single function definition. Make sure that your function returns a string.";
+// export const CODE_PROMPT_DIALOG_SUBTITLE =
+//   "Edit your Python code. This code snippet accepts module import and a single function definition. Make sure that your function returns a string.";
 
-export const CODE_DICT_DIALOG_SUBTITLE =
-  "Edit your dictionary. This dialog allows you to create your own customized dictionary. You can add as many key-value pairs as you want. While in edit mode, you can enter ({}) or ([]), and this will result in adding a new object or array.";
+// export const CODE_DICT_DIALOG_SUBTITLE =
+//   "Edit your dictionary. This dialog allows you to create your own customized dictionary. You can add as many key-value pairs as you want. While in edit mode, you can enter ({}) or ([]), and this will result in adding a new object or array.";
 
 /**
  * The base text for subtitle of Prompt Dialog
@@ -162,7 +162,7 @@ export const FLOW_NOT_BUILT_DESCRIPTION =
  * The base text for subtitle of Text Dialog
  * @constant
  */
-export const TEXT_DIALOG_SUBTITLE = "Edit your text.";
+// export const TEXT_DIALOG_SUBTITLE = "Edit your text.";
 
 /**
  * The base text for subtitle of Import Dialog
@@ -695,7 +695,7 @@ export const LANGFLOW_CHAT_TITLE = "Langflow Chat";
 export const CHAT_INPUT_PLACEHOLDER =
   "No chat input variables found. Click to run your flow.";
 export const CHAT_INPUT_PLACEHOLDER_SEND = "Send a message...";
-export const EDIT_CODE_TITLE = "Edit Code";
+// export const EDIT_CODE_TITLE = "Edit Code";
 export const MY_COLLECTION_DESC =
   "Manage your personal projects. Download and upload entire collections.";
 export const STORE_DESC = "Explore community-shared flows and components.";

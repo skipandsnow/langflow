@@ -1,2 +1,13 @@
 {
+    "EXPORT_DIALOG_SUBTITLE" : "Export flow as JSON file.",
+    "SETTINGS_DIALOG_SUBTITLE" : "Edit details about your project.",
+    "LOGS_DIALOG_SUBTITLE" : "Check out information about your flow.",
+    "CODE_DIALOG_SUBTITLE" : "Export your flow to use it with this code.",
+    "CHAT_FORM_DIALOG_SUBTITLE" : "Set up the input variables defined in prompt templates. Interact with agents and chains.",
+    "EDIT_DIALOG_SUBTITLE" : "Adjust the configurations of your component. Define parameter visibility for the canvas view. Remember to save once you’re finished.",
+    "CODE_DICT_DIALOG_SUBTITLE" : "Edit your dictionary. This dialog allows you to create your own customized dictionary. You can add as many key-value pairs as you want. While in edit mode, you can enter ({}) or ([]), and this will result in adding a new object or array.",
+    "TEXT_DIALOG_SUBTITLE" : "Edit your text.",
+    "CODE_PROMPT_DIALOG_SUBTITLE": "Edit your Python code. This code snippet accepts module import and a single function definition. Make sure that your function returns a string.",
+    "EDIT_CODE_TITLE" : "Edit Code",
+    "PROMPT_DIALOG_SUBTITLE" : "Create your prompt. Prompts can help guide the behavior of a Language Model.",
 }

@@ -13,6 +13,7 @@ import { useDarkStore } from "../../stores/darkStore";
 import useFlowsManagerStore from "../../stores/flowsManagerStore";
 import { downloadFlow, removeApiKeys } from "../../utils/reactflowUtils";
 import BaseModal from "../baseModal";
+import { useTranslation } from "react-i18next";
 
 const ExportModal = forwardRef(
   (props: { children: ReactNode }, ref): JSX.Element => {
@@ -27,7 +28,7 @@ const ExportModal = forwardRef(
     const [name, setName] = useState(currentFlow!.name);
     const [description, setDescription] = useState(currentFlow!.description);
     const [open, setOpen] = useState(false);
-
+    const { t } = useTranslation();
     return (
       <BaseModal
         size="smaller-h-full"
@@ -69,7 +70,7 @@ const ExportModal = forwardRef(
         }}
       >
         <BaseModal.Trigger asChild>{props.children}</BaseModal.Trigger>
-        <BaseModal.Header description={EXPORT_DIALOG_SUBTITLE}>
+        <BaseModal.Header description={t("EXPORT_DIALOG_SUBTITLE")}>
           <span className="pr-2">Export</span>
           <IconComponent
             name="Download"

@@ -10,7 +10,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "../../components/ui/tabs";
-import { CHAT_FORM_DIALOG_SUBTITLE } from "../../constants/constants";
 import { InputOutput } from "../../constants/enums";
 import { getMessagesTable } from "../../controllers/API";
 import useAlertStore from "../../stores/alertStore";
@@ -181,7 +180,7 @@ export default function IOModal({
     >
       <BaseModal.Trigger>{children}</BaseModal.Trigger>
       {/* TODO ADAPT TO ALL TYPES OF INPUTS AND OUTPUTS */}
-      <BaseModal.Header description={t(CHAT_FORM_DIALOG_SUBTITLE)}>
+      <BaseModal.Header description={t("CHAT_FORM_DIALOG_SUBTITLE")}>
         <div className="flex items-center">
           <span className="pr-2">{t("Playground")}</span>
           <IconComponent

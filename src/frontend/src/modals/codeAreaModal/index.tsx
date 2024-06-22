@@ -16,16 +16,13 @@ import {
   FUNC_ERROR_ALERT,
   IMPORT_ERROR_ALERT,
 } from "../../constants/alerts_constants";
-import {
-  CODE_PROMPT_DIALOG_SUBTITLE,
-  EDIT_CODE_TITLE,
-} from "../../constants/constants";
 import { postCustomComponent, postValidateCode } from "../../controllers/API";
 import useAlertStore from "../../stores/alertStore";
 import { useDarkStore } from "../../stores/darkStore";
 import { CodeErrorDataTypeAPI } from "../../types/api";
 import { codeAreaModalPropsType } from "../../types/components";
 import BaseModal from "../baseModal";
+import { useTranslation } from "react-i18next";
 
 export default function CodeAreaModal({
   value,
@@ -50,6 +47,7 @@ export default function CodeAreaModal({
   const [error, setError] = useState<{
     detail: CodeErrorDataTypeAPI;
   } | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     // if nodeClass.template has more fields other than code and dynamic is true
@@ -149,8 +147,8 @@ export default function CodeAreaModal({
   return (
     <BaseModal open={open} setOpen={setOpen}>
       <BaseModal.Trigger>{children}</BaseModal.Trigger>
-      <BaseModal.Header description={CODE_PROMPT_DIALOG_SUBTITLE}>
-        <span className="pr-2"> {EDIT_CODE_TITLE} </span>
+      <BaseModal.Header description={t("CODE_PROMPT_DIALOG_SUBTITLE")}>
+        <span className="pr-2"> {t("EDIT_CODE_TITLE")} </span>
         <IconComponent
           name="prompts"
           className="h-6 w-6 pl-1 text-primary"
