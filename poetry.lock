@@ -2117,6 +2117,20 @@ files = [
 ]
 
 [[package]]
+name = "firecrawl-py"
+version = "0.0.16"
+description = "Python SDK for Firecrawl API"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "firecrawl_py-0.0.16-py3-none-any.whl", hash = "sha256:9024f483b501852a6b9c4e6cdfc9e8dde452d922afac357080bb278a0c9c2a26"},
+    {file = "firecrawl_py-0.0.16.tar.gz", hash = "sha256:6c662fa0a549bc7f5c0acb704baba6731869ca0451094034264dfc1b4eb086e4"},
+]
+
+[package.dependencies]
+requests = "*"
+
+[[package]]
 name = "flaml"
 version = "2.1.2"
 description = "A fast library for automated machine learning and tuning"
@@ -10557,4 +10571,4 @@ local = ["ctransformers", "llama-cpp-python", "sentence-transformers"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "648e30a11f2454a10b9a19547a6e9cd10001b1732f80b98a586086b7b825e03e"
+content-hash = "3e72b6faa1c674615a7e5dec3e7d962349e736bf6675c08a49080b7f336cc75b"
