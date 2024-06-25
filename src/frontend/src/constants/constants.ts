@@ -569,9 +569,9 @@ export const ADMIN_HEADER_DESCRIPTION =
 
 export const BASE_URL_API = "/api/v1/";
 
-export const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:7860/";
+export const BACKEND_URL = process.env.BACKEND_URL || "http://172.24.70.35:31500/";
 
-export const LANGFLOW_DEFAULT_LOCALE = process.env.LANGFLOW_DEFAULT_LOCALE || 'en'
+export const LANGFLOW_DEFAULT_LOCALE = process.env.LANGFLOW_DEFAULT_LOCALE || 'zh-TW'
 
 /**
  * URLs excluded from error retries.
@@ -582,7 +582,7 @@ export const URL_EXCLUDED_FROM_ERROR_RETRIES = [
   `${BASE_URL_API}validate/code`,
   `${BASE_URL_API}custom_component`,
   `${BASE_URL_API}validate/prompt`,
-  `http://localhost:7860/login`,
+  `${BACKEND_URL}login`,
   `${BASE_URL_API}api_key/store`,
 ];
 
