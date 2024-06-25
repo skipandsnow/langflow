@@ -239,7 +239,7 @@ export default function Header(): JSX.Element {
                 <DropdownMenuItem
                   className="cursor-pointer gap-2"
                   onClick={() =>
-                    window.open("https://pre-release.langflow.org/", "_blank")
+                    window.open("https://docs.langflow.org/", "_blank")
                   }
                 >
                   <ForwardedIconComponent name="FileText" className="w-4" />
