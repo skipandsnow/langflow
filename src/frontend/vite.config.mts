@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
-      "process.env.LANGFLOW_DEFAULT_LOCALE": JSON.stringify(process.env.LANGFLOW_DEFAULT_LOCALE),
+      "process.env.LANGFLOW_DEFAULT_LOCALE": JSON.stringify(process.env.LANGFLOW_DEFAULT_LOCALE)
     },
     plugins: [react(), svgr()],
     server: {
