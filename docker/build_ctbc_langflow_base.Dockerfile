@@ -42,7 +42,10 @@ RUN apt-get update \
     # gcc
     gcc \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get install vim
 
+# Install Poetry
 RUN --mount=type=cache,target=/root/.cache \
 curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="${POETRY_HOME}/bin:${PATH}"
