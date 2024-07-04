@@ -36,6 +36,7 @@ class CustomComponent(BaseComponent):
     Represents a custom component in Langflow.
 
     Attributes:
+        name (Optional[str]): This attribute helps the frontend apply styles to known components.
         display_name (Optional[str]): The display name of the custom component.
         description (Optional[str]): The description of the custom component.
         code (Optional[str]): The code of the custom component.
@@ -49,6 +50,8 @@ class CustomComponent(BaseComponent):
         _tree (Optional[dict]): The code tree of the custom component.
     """
 
+    name: Optional[str] = None
+    """The name of the component used to styles. Defaults to None."""
     display_name: Optional[str] = None
     """The display name of the component. Defaults to None."""
     description: Optional[str] = None
@@ -83,7 +86,11 @@ class CustomComponent(BaseComponent):
     _flows_data: Optional[List[Data]] = None
     _outputs: List[OutputLog] = []
     _logs: List[Log] = []
-    _tracing_service: "TracingService"
+    tracing_service: Optional["TracingService"] = None
+
+    @property
+    def trace_name(self):
+        return f"{self.display_name} ({self.vertex.id})"
 
     def update_state(self, name: str, value: Any):
         if not self.vertex:
@@ -96,7 +103,7 @@ class CustomComponent(BaseComponent):
     def stop(self, output_name: str | None = None):
         if not output_name and self.vertex and len(self.vertex.outputs) == 1:
             output_name = self.vertex.outputs[0]["name"]
-        else:
+        elif not output_name:
             raise ValueError("You must specify an output name to call stop")
         if not self.vertex:
             raise ValueError("Vertex is not set")
@@ -131,6 +138,7 @@ class CustomComponent(BaseComponent):
             **data: Additional keyword arguments to initialize the custom component.
         """
         self.cache = TTLCache(maxsize=1024, ttl=60)
+        self._logs = []
         super().__init__(**data)
 
     @staticmethod
@@ -481,7 +489,7 @@ class CustomComponent(BaseComponent):
         """
         raise NotImplementedError
 
-    def log(self, message: LoggableType | list[LoggableType], name: str | None = None):
+    def log(self, message: LoggableType | list[LoggableType], name: Optional[str] = None):
         """
         Logs a message.
 
@@ -489,13 +497,11 @@ class CustomComponent(BaseComponent):
             message (LoggableType | list[LoggableType]): The message to log.
         """
         if name is None:
-            name = self.display_name if self.display_name else self.__class__.__name__
-        if hasattr(message, "model_dump") and isinstance(message, BaseModel):
-            message = message.model_dump()
+            name = f"Log {len(self._logs) + 1}"
         log = Log(message=message, type=get_artifact_type(message), name=name)
         self._logs.append(log)
-        if self.vertex:
-            self._tracing_service.add_log(trace_name=self.vertex.id, log=log)
+        if self.tracing_service and self.vertex:
+            self.tracing_service.add_log(trace_name=self.trace_name, log=log)
 
     def post_code_processing(self, new_build_config: dict, current_build_config: dict):
         """

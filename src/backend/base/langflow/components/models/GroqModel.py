@@ -12,6 +12,7 @@ class GroqModel(LCModelComponent):
     display_name: str = "Groq"
     description: str = "Generate text using Groq."
     icon = "Groq"
+    name = "GroqModel"
 
     inputs = [
         SecretStrInput(
@@ -68,7 +69,7 @@ class GroqModel(LCModelComponent):
         ),
     ]
 
-    def build_model(self) -> LanguageModel:
+    def build_model(self) -> LanguageModel:  # type: ignore[type-var]
         groq_api_key = self.groq_api_key
         model_name = self.model_name
         max_tokens = self.max_tokens
@@ -77,7 +78,7 @@ class GroqModel(LCModelComponent):
         n = self.n
         stream = self.stream
 
-        output = ChatGroq(
+        output = ChatGroq(  # type: ignore
             model=model_name,
             max_tokens=max_tokens or None,
             temperature=temperature,
@@ -87,4 +88,4 @@ class GroqModel(LCModelComponent):
             streaming=stream,
         )
 
-        return output
+        return output  # type: ignore

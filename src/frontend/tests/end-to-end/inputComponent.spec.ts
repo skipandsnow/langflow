@@ -19,10 +19,13 @@ test("InputComponent", async ({ page }) => {
     await page.waitForTimeout(5000);
     modalCount = await page.getByTestId("modal-title")?.count();
   }
-  await page.waitForTimeout(1000);
-
+  await page.waitForSelector('[data-testid="blank-flow"]', {
+    timeout: 30000,
+  });
   await page.getByTestId("blank-flow").click();
-  await page.waitForTimeout(3000);
+  await page.waitForSelector('[data-testid="extended-disclosure"]', {
+    timeout: 30000,
+  });
   await page.getByTestId("extended-disclosure").click();
   await page.getByPlaceholder("Search").click();
   await page.getByPlaceholder("Search").fill("Chroma");
@@ -34,6 +37,10 @@ test("InputComponent", async ({ page }) => {
     .dragTo(page.locator('//*[@id="react-flow-id"]'));
   await page.mouse.up();
   await page.mouse.down();
+  await page.waitForSelector('[title="fit view"]', {
+    timeout: 100000,
+  });
+
   await page.getByTitle("fit view").click();
   await page.getByTitle("zoom out").click();
   await page.getByTitle("zoom out").click();
@@ -128,7 +135,7 @@ test("InputComponent", async ({ page }) => {
     .getByTestId("popover-anchor-input-collection_name-edit")
     .fill("NEW_collection_name_test_123123123!@#$&*(&%$@ÇÇÇÀõe");
 
-  await page.getByText("Save Changes", { exact: true }).click();
+  await page.getByText("Close").last().click();
 
   const plusButtonLocator = page.getByTestId("input-collection_name");
   const elementCount = await plusButtonLocator?.count();
@@ -145,7 +152,7 @@ test("InputComponent", async ({ page }) => {
       await page.locator('//*[@id="showcollection_name"]').isChecked(),
     ).toBeTruthy();
 
-    await page.getByText("Save Changes", { exact: true }).click();
+    await page.getByText("Close").last().click();
 
     let value = await page
       .getByTestId("popover-anchor-input-collection_name")

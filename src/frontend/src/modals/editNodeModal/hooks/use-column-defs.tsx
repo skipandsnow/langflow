@@ -1,12 +1,19 @@
 import { ColDef, ValueGetterParams } from "ag-grid-community";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import TableNodeCellRender from "../../../components/tableComponent/components/tableNodeCellRender";
 import TableToggleCellRender from "../../../components/tableComponent/components/tableToggleCellRender";
+import { APIClassType } from "../../../types/api";
+import { NodeDataType } from "../../../types/flow";
 
 const useColumnDefs = (
-  myData: any,
-  handleOnNewValue: (newValue: any, name: string) => void,
-  handleOnChangeDb: (value: boolean, key: string) => void,
+  nodeClass: APIClassType,
+  handleOnNewValue: (newValue: any, name: string, setDb?: boolean) => void,
+  handleNodeClass: (
+    newNodeClass: APIClassType,
+    name: string,
+    code: string,
+    type?: string,
+  ) => void,
   changeAdvanced: (n: string) => void,
   open: boolean,
 ) => {
@@ -46,9 +53,9 @@ const useColumnDefs = (
         valueGetter: (params: ValueGetterParams) => {
           return {
             value: params.data.value,
-            nodeClass: myData.node,
+            nodeClass: nodeClass,
             handleOnNewValue: handleOnNewValue,
-            handleOnChangeDb: handleOnChangeDb,
+            handleNodeClass: handleNodeClass,
           };
         },
         minWidth: 340,
@@ -76,7 +83,7 @@ const useColumnDefs = (
         cellClass: "no-border",
       },
     ],
-    [open, myData],
+    [open, nodeClass],
   );
 
   return columnDefs;

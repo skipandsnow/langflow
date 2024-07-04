@@ -1,11 +1,14 @@
 from typing import Optional
-from firecrawl.firecrawl import FirecrawlApp
+
 from langflow.custom import CustomComponent
 from langflow.schema import Data
+
 
 class FirecrawlScrapeApi(CustomComponent):
     display_name: str = "FirecrawlScrapeApi"
     description: str = "Firecrawl Scrape API."
+    name = "FirecrawlScrapeApi"
+
     output_types: list[str] = ["Document"]
     documentation: str = "https://docs.firecrawl.dev/api-reference/endpoint/scrape"
     field_config = {
@@ -42,17 +45,23 @@ class FirecrawlScrapeApi(CustomComponent):
         self,
         api_key: str,
         url: str,
-        timeout: Optional[int] = 10000,
+        timeout: int = 10000,
         pageOptions: Optional[Data] = None,
         extractorOptions: Optional[Data] = None,
     ) -> Data:
+        try:
+            from firecrawl.firecrawl import FirecrawlApp  # type: ignore
+        except ImportError:
+            raise ImportError(
+                "Could not import firecrawl integration package. " "Please install it with `pip install firecrawl-py`."
+            )
         if extractorOptions:
-            extractor_options_dict = extractorOptions.__dict__['data']['text']
+            extractor_options_dict = extractorOptions.__dict__["data"]["text"]
         else:
             extractor_options_dict = {}
 
         if pageOptions:
-            page_options_dict = pageOptions.__dict__['data']['text']
+            page_options_dict = pageOptions.__dict__["data"]["text"]
         else:
             page_options_dict = {}
 

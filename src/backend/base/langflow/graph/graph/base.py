@@ -14,7 +14,7 @@ from langflow.graph.edge.base import ContractEdge
 from langflow.graph.graph.constants import lazy_load_vertex_dict
 from langflow.graph.graph.runnable_vertices_manager import RunnableVerticesManager
 from langflow.graph.graph.state_manager import GraphStateManager
-from langflow.graph.graph.utils import process_flow
+from langflow.graph.graph.utils import find_start_component_id, process_flow
 from langflow.graph.schema import InterfaceComponentTypes, RunOutputs
 from langflow.graph.vertex.base import Vertex
 from langflow.graph.vertex.types import InterfaceVertex, StateVertex
@@ -335,21 +335,22 @@ class Graph:
             logger.exception(exc)
 
         try:
-            start_component_id = next(
-                (vertex_id for vertex_id in self._is_input_vertices if "chat" in vertex_id.lower()), None
-            )
+            # Prioritize the webhook component if it exists
+            start_component_id = find_start_component_id(self._is_input_vertices)
             await self.process(start_component_id=start_component_id, fallback_to_env_vars=fallback_to_env_vars)
             self.increment_run_count()
         except Exception as exc:
             logger.exception(exc)
             tb = traceback.format_exc()
-            await self.end_all_traces(error=f"{exc.__class__.__name__}: {exc}\n\n{tb}")
+            asyncio.create_task(self.end_all_traces(error=f"{exc.__class__.__name__}: {exc}\n\n{tb}"))
             raise ValueError(f"Error running graph: {exc}") from exc
         finally:
-            await self.end_all_traces()
+            asyncio.create_task(self.end_all_traces())
         # Get the outputs
         vertex_outputs = []
         for vertex in self.vertices:
+            if not vertex._built:
+                continue
             if vertex is None:
                 raise ValueError(f"Vertex {vertex_id} not found")
 
@@ -1208,6 +1209,7 @@ class Graph:
         except ValueError:
             stop_or_start_vertex = self.get_root_of_group_node(vertex_id)
             stack = [stop_or_start_vertex.id]
+            vertex_id = stop_or_start_vertex.id
         stop_predecessors = [pre.id for pre in stop_or_start_vertex.predecessors]
         # DFS to collect all vertices that can reach the specified vertex
         while stack:
@@ -1229,15 +1231,17 @@ class Graph:
                             stack.append(successor.id)
                         else:
                             excluded.add(successor.id)
-                        all_successors = get_successors(successor)
+                        all_successors = get_successors(successor, recursive=False)
                         for successor in all_successors:
                             if is_start:
                                 stack.append(successor.id)
                             else:
                                 excluded.add(successor.id)
-                elif current_id not in stop_predecessors:
+                elif current_id not in stop_predecessors and is_start:
                     # If the current vertex is not the target vertex, we should add all its successors
                     # to the stack if they are not in visited
+
+                    # If we are starting from the beginning, we should add all successors
                     for successor in current_vertex.successors:
                         if successor.id not in visited:
                             stack.append(successor.id)
@@ -1443,7 +1447,7 @@ class Graph:
 
     def is_vertex_runnable(self, vertex_id: str) -> bool:
         """Returns whether a vertex is runnable."""
-        return self.run_manager.is_vertex_runnable(vertex_id)
+        return self.run_manager.is_vertex_runnable(vertex_id, self.inactivated_vertices)
 
     def build_run_map(self):
         """
@@ -1463,10 +1467,13 @@ class Graph:
         This checks the direct predecessors of each successor to identify any that are
         immediately runnable, expanding the search to ensure progress can be made.
         """
-        return self.run_manager.find_runnable_predecessors_for_successors(vertex_id)
+        return self.run_manager.find_runnable_predecessors_for_successors(vertex_id, self.inactivated_vertices)
 
     def remove_from_predecessors(self, vertex_id: str):
         self.run_manager.remove_from_predecessors(vertex_id)
+
+    def remove_vertex_from_runnables(self, vertex_id: str):
+        self.run_manager.remove_vertex_from_runnables(vertex_id)
 
     def build_in_degree(self, edges: List[ContractEdge]) -> Dict[str, int]:
         in_degree: Dict[str, int] = defaultdict(int)

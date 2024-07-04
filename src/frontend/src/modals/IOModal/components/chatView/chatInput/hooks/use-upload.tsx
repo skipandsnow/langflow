@@ -1,3 +1,4 @@
+import { AxiosResponse } from "axios";
 import { useEffect } from "react";
 import ShortUniqueId from "short-unique-id";
 import {
@@ -6,9 +7,17 @@ import {
   SN_ERROR_TEXT,
 } from "../../../../../../constants/constants";
 import useAlertStore from "../../../../../../stores/alertStore";
-import useFileUpload from "./use-file-upload";
+import { UploadFileTypeAPI } from "../../../../../../types/api";
 
-const useUpload = (uploadFile, currentFlowId, setFiles, lockChat) => {
+const useUpload = (
+  uploadFile: (
+    file: File,
+    id: string,
+  ) => Promise<AxiosResponse<UploadFileTypeAPI>>,
+  currentFlowId: string,
+  setFiles: any,
+  lockChat: boolean,
+) => {
   const setErrorData = useAlertStore((state) => state.setErrorData);
   useEffect(() => {
     const handlePaste = (event: ClipboardEvent): void => {
@@ -39,7 +48,6 @@ const useUpload = (uploadFile, currentFlowId, setFiles, lockChat) => {
               ...prevFiles,
               { file: blob, loading: true, error: false, id, type },
             ]);
-            useFileUpload(blob, currentFlowId, setFiles, id);
           }
         }
       }

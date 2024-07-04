@@ -1,6 +1,12 @@
 .PHONY: all init format lint build build_frontend install_frontend run_frontend run_backend dev help tests coverage
 
 all: help
+VERSION=$(shell grep "^version" pyproject.toml | sed 's/.*\"\(.*\)\"$$/\1/')
+DOCKERFILE=docker/build_and_push.Dockerfile
+DOCKERFILE_BACKEND=docker/build_and_push_backend.Dockerfile
+DOCKERFILE_FRONTEND=docker/frontend/build_and_push_frontend.Dockerfile
+DOCKER_COMPOSE=docker_example/docker-compose.yml
+
 log_level ?= debug
 host ?= 0.0.0.0
 port ?= 7860
@@ -47,20 +53,22 @@ init:
 
 
 coverage: ## run the tests and generate a coverage report
-	poetry run pytest --cov \
-		--cov-config=.coveragerc \
-		--cov-report xml \
-		--cov-report term-missing:skip-covered \
-		--cov-report lcov:coverage/lcov-pytest.info
+	@poetry run coverage run
+	@poetry run coverage erase
 
 
 # allow passing arguments to pytest
 unit_tests:
-	poetry run pytest --ignore=tests/integration --instafail -ra -n auto -m "not api_key_required" $(args)
+	poetry run pytest \
+		--ignore=tests/integration \
+		--instafail -ra -n auto -m "not api_key_required" \
+		$(args)
 
 
 integration_tests:
-	poetry run pytest tests/integration --instafail -ra -n auto $(args)
+	poetry run pytest tests/integration \
+		--instafail -ra -n auto \
+		$(args)
 
 format: ## run code formatters
 	poetry run ruff check . --fix
@@ -129,9 +137,20 @@ start:
 	@echo 'Running the CLI'
 
 ifeq ($(open_browser),false)
-	@make install_backend && poetry run langflow run --path $(path) --log-level $(log_level) --host $(host) --port $(port) --env-file $(env) --no-open-browser
+	@make install_backend && poetry run langflow run \
+		--path $(path) \
+		--log-level $(log_level) \
+		--host $(host) \
+		--port $(port) \
+		--env-file $(env) \
+		--no-open-browser
 else
-	@make install_backend && poetry run langflow run --path $(path) --log-level $(log_level) --host $(host) --port $(port) --env-file $(env)
+	@make install_backend && poetry run langflow run \
+		--path $(path) \
+		--log-level $(log_level) \
+		--host $(host) \
+		--port $(port) \
+		--env-file $(env)
 endif
 
 
@@ -166,13 +185,27 @@ backend: ## run the backend in development mode
 	@echo 'Setting up the environment'
 	@make setup_env
 	make install_backend
-	@-kill -9 $(lsof -t -i:7860)
+	@-kill -9 $$(lsof -t -i:7860)
 ifdef login
 	@echo "Running backend autologin is $(login)";
-	LANGFLOW_AUTO_LOGIN=$(login) poetry run uvicorn --factory langflow.main:create_app --host 0.0.0.0 --port 7860 --reload --env-file .env --loop asyncio --workers $(workers)
+	LANGFLOW_AUTO_LOGIN=$(login) poetry run uvicorn \
+		--factory langflow.main:create_app \
+		--host 0.0.0.0 \
+		--port $(port) \
+		--reload \
+		--env-file $(env) \
+		--loop asyncio \
+		--workers $(workers)
 else
-	@echo "Running backend respecting the .env file";
-	poetry run uvicorn --factory langflow.main:create_app --host 0.0.0.0 --port 7860 --reload --env-file .env  --loop asyncio --workers $(workers)
+	@echo "Running backend respecting the $(env) file";
+	poetry run uvicorn \
+		--factory langflow.main:create_app \
+		--host 0.0.0.0 \
+		--port $(port) \
+		--reload \
+		--env-file $(env) \
+		--loop asyncio \
+		--workers $(workers)
 endif
 
 
@@ -241,6 +274,55 @@ else
 		@echo 'Running docker compose up without build'
 		docker compose $(if $(debug),-f docker-compose.debug.yml) up
 endif
+
+
+docker_build: dockerfile_build clear_dockerimage ## build DockerFile
+
+
+docker_build_backend: dockerfile_build_be clear_dockerimage ## build Backend DockerFile
+
+
+docker_build_frontend: dockerfile_build_fe clear_dockerimage ## build Frontend Dockerfile
+
+
+dockerfile_build:
+	@echo 'BUILDING DOCKER IMAGE: ${DOCKERFILE}'
+	@docker build --rm \
+		-f ${DOCKERFILE} \
+		-t langflow:${VERSION} .
+
+
+dockerfile_build_be: dockerfile_build
+	@echo 'BUILDING DOCKER IMAGE BACKEND: ${DOCKERFILE_BACKEND}'
+	@docker build --rm \
+		--build-arg LANGFLOW_IMAGE=langflow:${VERSION} \
+		   -f ${DOCKERFILE_BACKEND} \
+		   -t langflow_backend:${VERSION} .
+
+
+dockerfile_build_fe: dockerfile_build
+	@echo 'BUILDING DOCKER IMAGE FRONTEND: ${DOCKERFILE_FRONTEND}'
+	@docker build --rm \
+		--build-arg LANGFLOW_IMAGE=langflow:${VERSION} \
+		   -f ${DOCKERFILE_FRONTEND} \
+		   -t langflow_frontend:${VERSION} .
+
+
+clear_dockerimage:
+	@echo 'Clearing the docker build'
+	@if docker images -f "dangling=true" -q | grep -q '.*'; then \
+		docker rmi $$(docker images -f "dangling=true" -q); \
+	fi
+
+
+docker_compose_up: docker_build docker_compose_down
+	@echo 'Running docker compose up'
+	docker compose -f $(DOCKER_COMPOSE) up --remove-orphans
+
+
+docker_compose_down:
+	@echo 'Running docker compose down'
+	docker compose -f $(DOCKER_COMPOSE) down || true
 
 
 lock_base:

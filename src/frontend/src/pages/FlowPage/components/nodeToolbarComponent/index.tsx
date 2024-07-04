@@ -31,6 +31,7 @@ import {
   updateFlowPosition,
 } from "../../../../utils/reactflowUtils";
 import { classNames, cn, isThereModal } from "../../../../utils/utils";
+import isWrappedWithClass from "../PageComponent/utils/is-wrapped-with-class";
 import ToolbarSelectItem from "./toolbarSelectItem";
 import { useTranslation } from "react-i18next";
 
@@ -79,6 +80,7 @@ export default function NodeToolbarComponent({
   const shortcuts = useShortcutsStore((state) => state.shortcuts);
   const unselectAll = useFlowStore((state) => state.unselectAll);
   function handleMinimizeWShortcut(e: KeyboardEvent) {
+    if (isWrappedWithClass(e, "noflow")) return;
     e.preventDefault();
     if (isMinimal) {
       setShowState((show) => !show);
@@ -93,6 +95,7 @@ export default function NodeToolbarComponent({
   }
 
   function handleGroupWShortcut(e: KeyboardEvent) {
+    if (isWrappedWithClass(e, "noflow")) return;
     e.preventDefault();
     if (isGroup) {
       handleSelectChange("ungroup");
@@ -100,29 +103,29 @@ export default function NodeToolbarComponent({
   }
 
   function handleShareWShortcut(e: KeyboardEvent) {
+    if (isWrappedWithClass(e, "noflow") && !showconfirmShare) return;
     e.preventDefault();
-    if (isThereModal() && !showOverrideModal) return;
     if (hasApiKey || hasStore) {
       setShowconfirmShare((state) => !state);
     }
   }
 
   function handleCodeWShortcut(e: KeyboardEvent) {
+    if (isWrappedWithClass(e, "noflow") && !openModal) return;
     e.preventDefault();
-    if (isThereModal() && !openModal) return;
     if (hasCode) return setOpenModal((state) => !state);
     setNoticeData({ title: `You can not access ${data.id} code` });
   }
 
   function handleAdvancedWShortcut(e: KeyboardEvent) {
+    if (isWrappedWithClass(e, "noflow") && !showModalAdvanced) return;
     e.preventDefault();
-    if (isThereModal() && !showModalAdvanced) return;
     setShowModalAdvanced((state) => !state);
   }
 
   function handleSaveWShortcut(e: KeyboardEvent) {
+    if (isWrappedWithClass(e, "noflow") && !showOverrideModal) return;
     e.preventDefault();
-    if (isThereModal() && !showOverrideModal) return;
     if (isSaved) {
       setShowOverrideModal((state) => !state);
       return;
@@ -150,6 +153,7 @@ export default function NodeToolbarComponent({
   }
 
   function handleFreeze(e: KeyboardEvent) {
+    if (isWrappedWithClass(e, "noflow")) return;
     e.preventDefault();
     if (data.node?.flow) return;
     setNode(data.id, (old) => ({
@@ -182,7 +186,7 @@ export default function NodeToolbarComponent({
   useHotkeys(save, handleSaveWShortcut, { preventDefault });
   useHotkeys(docs, handleDocsWShortcut, { preventDefault });
   useHotkeys(download, handleDownloadWShortcut, { preventDefault });
-  useHotkeys(freeze, handleFreeze, { preventDefault });
+  useHotkeys(freeze, handleFreeze);
 
   const isMinimal = numberOfHandles <= 1 && numberOfOutputHandles <= 1;
   const isGroup = data.node?.flow ? true : false;
@@ -388,7 +392,11 @@ export default function NodeToolbarComponent({
     });
   };
 
-  const handleNodeClass = (newNodeClass: APIClassType, code?: string): void => {
+  const handleNodeClass = (
+    newNodeClass: APIClassType,
+    code?: string,
+    type?: string,
+  ): void => {
     if (!data.node) return;
     if (data.node!.template[name].value !== code) {
       takeSnapshot();
@@ -404,6 +412,10 @@ export default function NodeToolbarComponent({
         display_name: newNodeClass.display_name ?? data.node!.display_name,
       };
 
+      if (type) {
+        newNode.data.type = type;
+      }
+
       newNode.data.node.template[name].value = code;
 
       return newNode;
@@ -417,7 +429,7 @@ export default function NodeToolbarComponent({
 
   return (
     <>
-      <div className="w-26 nocopy nowheel nopan nodelete nodrag noundo h-10">
+      <div className="w-26 noflow nowheel nopan nodelete nodrag h-10">
         <span className="isolate inline-flex rounded-md shadow-sm">
           {hasCode && (
             <ShadTooltip

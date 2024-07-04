@@ -3,21 +3,14 @@ from pydantic.v1 import SecretStr
 from langflow.base.constants import STREAM_INFO_TEXT
 from langflow.base.models.model import LCModelComponent
 from langflow.field_typing import LanguageModel
-from langflow.inputs import (
-    BoolInput,
-    DropdownInput,
-    FloatInput,
-    IntInput,
-    MessageInput,
-    SecretStrInput,
-    StrInput,
-)
+from langflow.inputs import BoolInput, DropdownInput, FloatInput, IntInput, MessageInput, SecretStrInput, StrInput
 
 
 class GoogleGenerativeAIComponent(LCModelComponent):
     display_name = "Google Generative AI"
     description = "Generate text using Google Generative AI."
     icon = "GoogleGenerativeAI"
+    name = "GoogleGenerativeAIModel"
 
     inputs = [
         MessageInput(name="input_value", display_name="Input"),
@@ -66,7 +59,7 @@ class GoogleGenerativeAIComponent(LCModelComponent):
         ),
     ]
 
-    def build_model(self) -> LanguageModel:
+    def build_model(self) -> LanguageModel:  # type: ignore[type-var]
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
         except ImportError:
@@ -90,4 +83,4 @@ class GoogleGenerativeAIComponent(LCModelComponent):
             google_api_key=SecretStr(google_api_key),
         )
 
-        return output
+        return output  # type: ignore

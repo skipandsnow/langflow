@@ -4,13 +4,14 @@ from pydantic.v1 import SecretStr
 from langflow.base.constants import STREAM_INFO_TEXT
 from langflow.base.models.model import LCModelComponent
 from langflow.field_typing import LanguageModel
-from langflow.io import BoolInput, DropdownInput, FloatInput, IntInput, MessageTextInput, Output, SecretStrInput
+from langflow.io import BoolInput, DropdownInput, FloatInput, IntInput, MessageTextInput, SecretStrInput
 
 
 class AnthropicModelComponent(LCModelComponent):
     display_name = "Anthropic"
     description = "Generate text using Anthropic Chat&Completion LLMs with prefill support."
     icon = "Anthropic"
+    name = "AnthropicModel"
 
     inputs = [
         MessageTextInput(name="input_value", display_name="Input"),
@@ -59,12 +60,8 @@ class AnthropicModelComponent(LCModelComponent):
             advanced=True,
         ),
     ]
-    outputs = [
-        Output(display_name="Text", name="text_output", method="text_response"),
-        Output(display_name="Language Model", name="model_output", method="build_model"),
-    ]
 
-    def build_model(self) -> LanguageModel:
+    def build_model(self) -> LanguageModel:  # type: ignore[type-var]
         model = self.model
         anthropic_api_key = self.anthropic_api_key
         max_tokens = self.max_tokens
@@ -83,7 +80,7 @@ class AnthropicModelComponent(LCModelComponent):
         except Exception as e:
             raise ValueError("Could not connect to Anthropic API.") from e
 
-        return output
+        return output  # type: ignore
 
     def _get_exception_message(self, exception: Exception) -> str | None:
         """

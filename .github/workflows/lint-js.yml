@@ -1,11 +1,14 @@
 name: Lint Frontend
 
 on:
-  pull_request:
-    paths:
-      - "src/frontend/**"
-  merge_group:
-    branches: [dev]
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "(Optional) Branch to checkout"
+        required: false
+        type: string
+
 
 env:
   NODE_VERSION: "21"
@@ -20,6 +23,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -45,10 +50,4 @@ jobs:
       - name: Run Prettier
         run: |
           cd src/frontend
-          npm run format
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: Apply Prettier formatting
-          branch: ${{ github.head_ref }}
-
+          npm run check-format

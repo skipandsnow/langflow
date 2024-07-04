@@ -12,12 +12,6 @@ export default function NewFlowModal({
   const examples = useFlowsManagerStore((state) => state.examples);
   const { t } = useTranslation();
 
-  examples?.forEach((example) => {
-    if (example.name === "Blog Writter") {
-      example.name = "Blog Writer";
-    }
-  });
-
   return (
     <BaseModal size="three-cards" open={open} setOpen={setOpen}>
       <BaseModal.Header description={t("Select a template below")}>

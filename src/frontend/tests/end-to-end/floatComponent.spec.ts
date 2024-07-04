@@ -19,10 +19,13 @@ test("FloatComponent", async ({ page }) => {
     await page.waitForTimeout(5000);
     modalCount = await page.getByTestId("modal-title")?.count();
   }
-  await page.waitForTimeout(1000);
-
+  await page.waitForSelector('[data-testid="blank-flow"]', {
+    timeout: 30000,
+  });
   await page.getByTestId("blank-flow").click();
-  await page.waitForTimeout(3000);
+  await page.waitForSelector('[data-testid="extended-disclosure"]', {
+    timeout: 30000,
+  });
   await page.getByTestId("extended-disclosure").click();
   await page.getByPlaceholder("Search").click();
   await page.getByPlaceholder("Search").fill("ollama");
@@ -96,7 +99,7 @@ test("FloatComponent", async ({ page }) => {
     await page.locator('//*[@id="showmirostat_tau"]').isChecked(),
   ).toBeFalsy();
 
-  await page.getByText("Save Changes", { exact: true }).click();
+  await page.getByText("Close").last().click();
 
   const plusButtonLocator = page.locator('//*[@id="float-input"]');
   const elementCount = await plusButtonLocator?.count();
@@ -112,7 +115,7 @@ test("FloatComponent", async ({ page }) => {
       await page.locator('//*[@id="showtemperature"]').isChecked(),
     ).toBeTruthy();
 
-    await page.getByText("Save Changes", { exact: true }).click();
+    await page.getByText("Close").last().click();
     await page.locator('//*[@id="float-input"]').click();
     await page.locator('//*[@id="float-input"]').fill("3");
 

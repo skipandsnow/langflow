@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { defineConfig } from "vite";
 import svgr from "vite-plugin-svgr";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ mode }) => {
   dotenv.config({ path: path.resolve(__dirname, "../../.env") });
@@ -35,7 +36,7 @@ export default defineConfig(({ mode }) => {
       "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
       "process.env.LANGFLOW_DEFAULT_LOCALE": JSON.stringify(process.env.LANGFLOW_DEFAULT_LOCALE)
     },
-    plugins: [react(), svgr()],
+    plugins: [react(), svgr(), tsconfigPaths()],
     server: {
       port: port,
       proxy: {

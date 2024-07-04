@@ -7,11 +7,11 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Dict, Optional
 from uuid import UUID
 
-from langchain.callbacks.tracers.langchain import wait_for_all_tracers
 from loguru import logger
 
 from langflow.schema.data import Data
 from langflow.services.base import Service
+from langflow.services.tracing.base import BaseTracer
 from langflow.services.tracing.schema import Log
 
 if TYPE_CHECKING:
@@ -33,6 +33,7 @@ class TracingService(Service):
         self.run_id: UUID | None = None
         self.project_name = None
         self._tracers: dict[str, LangSmithTracer] = {}
+        self._logs: dict[str, list[Log | dict[Any, Any]]] = defaultdict(list)
         self.logs_queue: asyncio.Queue = asyncio.Queue()
         self.running = False
         self.worker_task = None
@@ -69,8 +70,9 @@ class TracingService(Service):
             # check the qeue is empty
             if not self.logs_queue.empty():
                 await self.logs_queue.join()
-            self.worker_task.cancel()
-            self.worker_task = None
+            if self.worker_task:
+                self.worker_task.cancel()
+                self.worker_task = None
 
         except Exception as e:
             logger.error(f"Error stopping tracing service: {e}")
@@ -122,7 +124,9 @@ class TracingService(Service):
             if not tracer.ready:
                 continue
             try:
-                tracer.end_trace(trace_name=trace_name, outputs=self.outputs[trace_name], error=error)
+                tracer.end_trace(
+                    trace_name=trace_name, outputs=self.outputs[trace_name], error=error, logs=self._logs[trace_name]
+                )
             except Exception as e:
                 logger.error(f"Error ending trace {trace_name}: {e}")
 
@@ -140,19 +144,8 @@ class TracingService(Service):
         self._reset_io()
         await self.stop()
 
-    async def _add_log(self, trace_name: str, log: Log):
-        for tracer in self._tracers.values():
-            if not tracer.ready:
-                continue
-            try:
-                tracer.add_log(trace_name, log)
-            except Exception as e:
-                logger.error(f"Error adding log to trace {trace_name}: {e}")
-
     def add_log(self, trace_name: str, log: Log):
-        if not self.running:
-            asyncio.run(self.start())
-        self.logs_queue.put_nowait((self._add_log, (trace_name, log)))
+        self._logs[trace_name].append(log)
 
     @asynccontextmanager
     async def trace_context(
@@ -176,11 +169,10 @@ class TracingService(Service):
 
     def set_outputs(self, trace_name: str, outputs: Dict[str, Any], output_metadata: Dict[str, Any] | None = None):
         self.outputs[trace_name] |= outputs or {}
-
         self.outputs_metadata[trace_name] |= output_metadata or {}
 
 
-class LangSmithTracer:
+class LangSmithTracer(BaseTracer):
     def __init__(self, trace_name: str, trace_type: str, project_name: str, trace_id: UUID):
         from langsmith.run_trees import RunTree
 
@@ -234,7 +226,7 @@ class LangSmithTracer:
             inputs=processed_inputs,
         )
         if metadata:
-            child.add_metadata(raw_inputs)
+            child.add_metadata(metadata)
         self._children[trace_name] = child
         self._child_link: dict[str, str] = {}
 
@@ -264,13 +256,21 @@ class LangSmithTracer:
             value = value.to_lc_document()
         return value
 
-    def end_trace(self, trace_name: str, outputs: Dict[str, Any] | None = None, error: str | None = None):
+    def end_trace(
+        self,
+        trace_name: str,
+        outputs: Dict[str, Any] | None = None,
+        error: str | None = None,
+        logs: list[Log | dict] = [],
+    ):
         child = self._children[trace_name]
         raw_outputs = {}
         processed_outputs = {}
         if outputs:
             raw_outputs = outputs
             processed_outputs = self._convert_to_langchain_types(outputs)
+        if logs:
+            child.add_metadata({"logs": {log.get("name"): log for log in logs}})
         child.add_metadata({"outputs": raw_outputs})
         child.end(outputs=processed_outputs, error=error)
         if error:
@@ -279,23 +279,16 @@ class LangSmithTracer:
             child.post()
         self._child_link[trace_name] = child.get_url()
 
-    def add_log(self, trace_name: str, log: Log):
-        log_dict = {
-            "name": log.get("name"),
-            "time": datetime.now(timezone.utc).isoformat(),
-            "message": log.get("message"),
-        }
-        self._children[trace_name].add_event(log_dict)
-
     def end(
         self,
         inputs: dict[str, Any],
         outputs: Dict[str, Any],
         error: str | None = None,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
-        self._run_tree.add_metadata({"inputs": inputs, "metadata": metadata or {}})
+        self._run_tree.add_metadata({"inputs": inputs})
+        if metadata:
+            self._run_tree.add_metadata(metadata)
         self._run_tree.end(outputs=outputs, error=error)
         self._run_tree.post()
-        wait_for_all_tracers()
         self._run_link = self._run_tree.get_url()

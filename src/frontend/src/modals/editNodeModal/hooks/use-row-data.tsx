@@ -1,14 +1,17 @@
 import { useMemo } from "react";
 import { LANGFLOW_SUPPORTED_TYPES } from "../../../constants/constants";
-import { TemplateVariableType } from "../../../types/api";
+import { APIClassType } from "../../../types/api";
+import { NodeDataType } from "../../../types/flow";
 
-const useRowData = (myData, open) => {
+const useRowData = (
+  myData: NodeDataType,
+  nodeClass: APIClassType,
+  open: boolean,
+) => {
   const rowData = useMemo(() => {
     return Object.keys(myData.node!.template)
       .filter((key: string) => {
-        const templateParam = myData.node!.template[
-          key
-        ] as TemplateVariableType;
+        const templateParam = myData.node!.template[key] as any;
         return (
           key.charAt(0) !== "_" &&
           templateParam.show &&
@@ -20,16 +23,14 @@ const useRowData = (myData, open) => {
         );
       })
       .map((key: string) => {
-        const templateParam = myData.node!.template[
-          key
-        ] as TemplateVariableType;
+        const templateParam = myData.node!.template[key] as any;
         return {
           ...templateParam,
           key: key,
           id: key,
         };
       });
-  }, [open, myData]);
+  }, [open, nodeClass]);
 
   return rowData;
 };
