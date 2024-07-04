@@ -2,7 +2,7 @@
 # Download all build dependencies to local
 ################################
 
-FROM langflow:ctbc-base
+FROM langflow:base
 
 # Copy the entire project into the build image
 WORKDIR /app
@@ -18,6 +18,7 @@ RUN pip download setuptools wheel pybind11 poetry-core cmake -d pypi/wheels/
 # ================================= #
 
 # Complile and build frontend
+RUN make init
 RUN make build base=true
 
 # Update main poetry to local

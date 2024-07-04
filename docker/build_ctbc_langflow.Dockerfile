@@ -13,16 +13,20 @@ COPY scripts ./scripts
 COPY Makefile .env ./
 COPY dist/.venv/ ./.venv
 COPY pypi ./pypi
+# RUN python -m pip install requests --user && cd ./scripts && python update_dependencies.py
+
+RUN pip install --no-index --find-links=pypi/install/ pypiserver
 
 # Building frontend & langflow-base
 # Step 1: export env vars and build base
 RUN export $(grep -v '^#' .env | xargs)
-RUN make build_frontend
-RUN make build_langflow_base
+# RUN make build base=true
+RUN build_frontend
 
 # Step 2: build langflow
-RUN poetry build -f wheel
-RUN poetry run pip install dist/*.whl -i http://localhost:8080/simple/
+RUN poetry build -f wheel \
+    && (pypi-server run -p 8080 ./pypi/wheels &) \
+    && poetry run pip install dist/*.whl -i http://localhost:8080/simple/
 
 ################################
 # RUNTIME
