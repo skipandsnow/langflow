@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1
 # Keep this syntax directive! It's used to enable Docker BuildKit
 
-
 ################################
 # BUILDER-BASE
 # Used to build deps + create our virtual environment
@@ -33,8 +32,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYSETUP_PATH="/opt/pysetup" \
     VENV_PATH="/opt/pysetup/.venv"
 
+# Update latest libraries
 RUN apt-get update \
-    && apt-get install vim openjdk-17-jre-headless -y \
+    && apt-get install vim -y \
     && apt-get install --no-install-recommends -y \
     # deps for installing poetry
     curl \
@@ -49,3 +49,25 @@ RUN apt-get update \
 RUN --mount=type=cache,target=/root/.cache \
 curl -sSL https://install.python-poetry.org | python3 -
 ENV PATH="${POETRY_HOME}/bin:${PATH}"
+
+# Work folder to /app
+WORKDIR /app
+
+# Copy the entire project into the build image
+COPY pyproject.toml poetry.lock README.md ./
+COPY src/ ./src
+COPY scripts ./scripts
+COPY Makefile .env ./
+COPY pypi ./pypi
+RUN python -m pip install requests --user && cd ./scripts && python update_dependencies.py
+
+# Prepare frontend dependencies
+RUN poetry lock --no-update
+RUN make build base=true
+
+# Prepare backend dependencies
+RUN poetry install --without dev --sync -E deploy -E couchbase -E cassio
+
+# Prepare compile wheels
+RUN pip install --no-index --find-links=pypi/install/ pypi-server
+RUN mkdir -p pypi/wheels && pip download setuptools wheel pybind11 poetry-core cmake -d pypi/wheels/
