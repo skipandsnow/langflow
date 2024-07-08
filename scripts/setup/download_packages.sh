@@ -13,12 +13,11 @@
 DOCKER_PS_ID="$(docker run -d langflow:download-dependencies bash)"
 
 # download installed libraries
-mkdir -p dist && docker cp $DOCKER_PS_ID:/app/.venv dist/.venv
+mkdir -p downloaded_packages/backend && docker cp $DOCKER_PS_ID:/app/.venv dist/.venv
 mkdir -p pypi/wheels && docker cp $DOCKER_PS_ID:/app/pypi/wheels ./pypi/wheels/
 
 # download node modules for frontend
-rm -rf src/frontend/node_modules/*
-docker cp $DOCKER_PS_ID:/app/src/frontend/node_modules ./src/frontend/
+mkdir -p downloaded_packages/frontend && docker cp $DOCKER_PS_ID:/app/src/frontend/node_modules ./src/frontend/
 
 # rm docker container after works
 docker rm $DOCKER_PS_ID
