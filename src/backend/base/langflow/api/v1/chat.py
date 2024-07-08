@@ -105,13 +105,6 @@ async def retrieve_vertices_order(
                 first_layer = graph.sort_vertices()
         else:
             first_layer = graph.sort_vertices()
-        # When we send vertices to the frontend
-        # we need to remove them from the predecessors
-        # so they are not considered for building again
-        # which duplicates the results
-        for vertex_id in first_layer:
-            graph.remove_from_predecessors(vertex_id)
-            graph.remove_vertex_from_runnables(vertex_id)
 
         # Now vertices is a list of lists
         # We need to get the id of each vertex
@@ -268,9 +261,9 @@ async def build_vertex(
             background_tasks.add_task(graph.end_all_traces)
 
         build_response = VertexBuildResponse(
-            inactivated_vertices=inactivated_vertices,
-            next_vertices_ids=next_runnable_vertices,
-            top_level_vertices=top_level_vertices,
+            inactivated_vertices=list(set(inactivated_vertices)),
+            next_vertices_ids=list(set(next_runnable_vertices)),
+            top_level_vertices=list(set(top_level_vertices)),
             valid=valid,
             params=params,
             id=vertex.id,

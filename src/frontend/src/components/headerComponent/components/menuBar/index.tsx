@@ -221,8 +221,7 @@ export const MenuBar = ({}: {}): JSX.Element => {
               />
               <div>{printByBuildStatus()}</div>
             </div>
-            {/* Deactivating this until we find a better solution */}
-            {/* <button
+            <button
               disabled={!isBuilding}
               onClick={(_) => {
                 if (isBuilding) {
@@ -240,7 +239,7 @@ export const MenuBar = ({}: {}): JSX.Element => {
             >
               <IconComponent name="Square" className="h-4 w-4" />
               <span>Stop</span>
-            </button> */}
+            </button>
           </div>
         </ShadTooltip>
       )}

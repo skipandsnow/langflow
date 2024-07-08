@@ -168,6 +168,8 @@ export default function ChatView({
     setIsDragging(false);
   };
 
+  const { mutate } = usePostUploadFile();
+
   const handleFiles = (files, setFiles, currentFlowId, setErrorData) => {
     if (files) {
       const file = files?.[0];
@@ -195,7 +197,7 @@ export default function ChatView({
         { file: blob, loading: true, error: false, id, type },
       ]);
 
-      mutation.mutate(
+      mutate(
         { file: blob, id: currentFlowId },
         {
           onSuccess: (data) => {
@@ -220,8 +222,6 @@ export default function ChatView({
       );
     }
   };
-
-  const mutation = usePostUploadFile();
 
   return (
     <div
