@@ -60,10 +60,11 @@ COPY scripts ./scripts
 COPY Makefile .env ./
 COPY pypi ./pypi
 RUN python -m pip install requests --user && cd ./scripts && python update_dependencies.py
-RUN npm config set maxsockets 1
+
+RUN npm config set maxsockets 5 && npm config set audit false
 
 # Prepare frontend dependencies
-RUN install_frontendci
+RUN make install_frontendci
 
 # # Prepare backend dependencies
 RUN poetry lock --no-update
