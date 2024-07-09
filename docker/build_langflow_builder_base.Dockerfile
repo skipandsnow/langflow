@@ -60,12 +60,13 @@ COPY scripts ./scripts
 COPY Makefile .env ./
 COPY pypi ./pypi
 RUN python -m pip install requests --user && cd ./scripts && python update_dependencies.py
+RUN npm config set maxsockets 1
 
 # Prepare frontend dependencies
-RUN poetry lock --no-update
-RUN make build base=true
+RUN install_frontendci
 
-# Prepare backend dependencies
+# # Prepare backend dependencies
+RUN poetry lock --no-update
 RUN poetry install --without dev --sync -E deploy -E couchbase -E cassio
 
 # Prepare compile wheels
