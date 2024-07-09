@@ -8,7 +8,7 @@
 
 # 1. use python:3.12.3-slim as the base image until https://github.com/pydantic/pydantic-core/issues/1292 gets resolved
 # 2. do not add --platform=$BUILDPLATFORM because the pydantic binaries must be resolved for the final architecture
-FROM python:3.12.3-slim as builder-base
+FROM python:3.12.3-slim AS builder-base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     \
@@ -61,8 +61,7 @@ COPY Makefile .env ./
 COPY pypi ./pypi
 RUN python -m pip install requests --user && cd ./scripts && python update_dependencies.py
 
-RUN npm config set maxsockets 5 && npm config set audit false
-
+# RUN npm config set maxsockets 1
 # Prepare frontend dependencies
 RUN make install_frontendci
 
@@ -71,5 +70,5 @@ RUN poetry lock --no-update
 RUN poetry install --without dev --sync -E deploy -E couchbase -E cassio
 
 # Prepare compile wheels
-RUN pip install --no-index --find-links=pypi/install/ pypi-server
+RUN pip install --no-index --find-links=pypi/install/ pypiserver
 RUN mkdir -p pypi/wheels && pip download setuptools wheel pybind11 poetry-core cmake -d pypi/wheels/

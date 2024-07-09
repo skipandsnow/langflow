@@ -6,7 +6,7 @@
 # Setup user, utilities and copy the virtual environment only
 ################################
 # 1. use python:3.12.3-slim as the base image until https://github.com/pydantic/pydantic-core/issues/1292 gets resolved
-FROM python:3.12.3-slim as runtime
+FROM python:3.12.3-slim AS runtime
 
 RUN apt-get -y update \
     && apt-get install vim -y \
