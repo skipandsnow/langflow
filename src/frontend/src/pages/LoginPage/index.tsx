@@ -68,15 +68,15 @@ export default function LoginPage(): JSX.Element {
       }}
       className="h-full w-full"
     >
-      <div className="flex h-full w-full flex-col items-center justify-center bg-muted">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-muted bg-ctbc-bg bg-cover bg-center">
         <div className="flex w-72 flex-col items-center justify-center gap-2">
-          <span className="mb-4 text-5xl">⛓️</span>
-          <span className="mb-6 text-2xl font-semibold text-primary">
+          <img src="src/assets/logo-ctbc.png" alt="CTBC Logo" className="mb-4 h-20" />
+          <span className="mb-6 text-4xl font-extrabold text-primary">
             {t("Sign in to Langflow")}
           </span>
           <div className="mb-3 w-full">
             <Form.Field name="username">
-              <Form.Label className="data-[invalid]:label-invalid">
+              <Form.Label className="data-[invalid]:label-invalid font-bold">
                 {t("Username")}  <span className="font-medium text-destructive">*</span>
               </Form.Label>
 
@@ -100,7 +100,7 @@ export default function LoginPage(): JSX.Element {
           </div>
           <div className="mb-3 w-full">
             <Form.Field name="password">
-              <Form.Label className="data-[invalid]:label-invalid">
+              <Form.Label className="data-[invalid]:label-invalid font-bold">
               {t("Password")}  <span className="font-medium text-destructive">*</span>
               </Form.Label>
 
@@ -130,7 +130,7 @@ export default function LoginPage(): JSX.Element {
           </div>
           <div className="w-full">
             <Link to="/signup">
-              <Button className="w-full" variant="outline" type="button">
+              <Button className="w-full" variant="primary" type="button">
                 {t("Don't have an account")}?&nbsp;<b>{t("Sign Up")}</b>
               </Button>
             </Link>

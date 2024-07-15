@@ -155,6 +155,9 @@ const config = {
       backdropBlur: {
         xs: "2px",
       },
+      backgroundImage: {
+        'ctbc-bg': "url('../assets/bg-ctbc.jpg')",
+      },
     },
   },
 
