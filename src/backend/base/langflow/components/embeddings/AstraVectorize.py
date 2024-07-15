@@ -4,7 +4,7 @@ from langflow.inputs.inputs import DictInput, SecretStrInput, MessageTextInput, 
 from langflow.template.field.base import Output
 
 
-class AstraVectorize(Component):
+class AstraVectorizeComponent(Component):
     display_name: str = "Astra Vectorize"
     description: str = "Configuration options for Astra Vectorize server-side embeddings."
     documentation: str = "https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html"
@@ -66,12 +66,13 @@ class AstraVectorize(Component):
         MessageTextInput(
             name="api_key_name",
             display_name="Provider API Key Name",
-            info="The name of the embeddings provider API key stored on Astra. If set, it will override the 'ProviderKey' in the authentication parameters.",
+            info="The name of the embeddings provider API key stored on Astra.",
         ),
         SecretStrInput(
             name="provider_api_key",
             display_name="Provider API Key",
             info="An alternative to the Astra Authentication that passes an API key for the provider with each request to Astra DB. This may be used when Vectorize is configured for the collection, but no corresponding provider secret is stored within Astra's key management system.",
+            advanced=True,
         ),
         DictInput(
             name="authentication",
@@ -92,7 +93,7 @@ class AstraVectorize(Component):
 
     def build_options(self) -> dict[str, Any]:
         provider_value = self.VECTORIZE_PROVIDERS_MAPPING[self.provider][0]
-        authentication = {**self.authentication}
+        authentication = {**(self.authentication or {})}
         api_key_name = self.api_key_name
         if api_key_name:
             authentication["providerKey"] = api_key_name
@@ -102,7 +103,7 @@ class AstraVectorize(Component):
                 "provider": provider_value,
                 "modelName": self.model_name,
                 "authentication": authentication,
-                "parameters": self.model_parameters,
+                "parameters": self.model_parameters or {},
             },
             "collection_embedding_api_key": self.provider_api_key,
         }

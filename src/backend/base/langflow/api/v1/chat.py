@@ -106,6 +106,9 @@ async def retrieve_vertices_order(
         else:
             first_layer = graph.sort_vertices()
 
+        for vertex_id in first_layer:
+            graph.run_manager.add_to_vertices_being_run(vertex_id)
+
         # Now vertices is a list of lists
         # We need to get the id of each vertex
         # and return the same structure but only with the ids
@@ -185,7 +188,7 @@ async def build_vertex(
         vertex = graph.get_vertex(vertex_id)
 
         try:
-            lock = chat_service._cache_locks[flow_id_str]
+            lock = chat_service._async_cache_locks[flow_id_str]
             (
                 result_dict,
                 params,

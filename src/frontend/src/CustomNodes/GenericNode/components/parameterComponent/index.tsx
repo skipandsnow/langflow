@@ -12,6 +12,7 @@ import InputGlobalComponent from "../../../../components/inputGlobalComponent";
 import InputListComponent from "../../../../components/inputListComponent";
 import IntComponent from "../../../../components/intComponent";
 import KeypairListComponent from "../../../../components/keypairListComponent";
+import { Multiselect } from "../../../../components/multiselectComponent";
 import PromptAreaComponent from "../../../../components/promptComponent";
 import ShadTooltip from "../../../../components/shadTooltipComponent";
 import TextAreaComponent from "../../../../components/textAreaComponent";
@@ -248,7 +249,7 @@ export default function ParameterComponent({
   };
 
   useEffect(() => {
-    if (disabledOutput) {
+    if (disabledOutput && data.node?.outputs![index].hidden) {
       handleUpdateOutputHide(false);
     }
   }, [disabledOutput]);
@@ -296,7 +297,7 @@ export default function ParameterComponent({
                 disabled={disabledOutput}
                 unstyled
                 onClick={() => handleUpdateOutputHide()}
-                data-testid={`output-inspection-${title.toLowerCase()}`}
+                data-testid={`input-inspection-${title.toLowerCase()}`}
               >
                 <IconComponent
                   className={cn(
@@ -528,6 +529,7 @@ export default function ParameterComponent({
           condition={
             left === true &&
             type === "str" &&
+            !data.node?.template[name]?.list &&
             (data.node?.template[name]?.options ||
               data.node?.template[name]?.real_time_refresh)
           }
@@ -556,6 +558,23 @@ export default function ParameterComponent({
                 />
               </div>
             )}
+          </div>
+        </Case>
+        <Case
+          condition={
+            type === "str" &&
+            !!data.node?.template[name]?.options &&
+            !!data.node?.template[name]?.list
+          }
+        >
+          <div className="mt-2 flex w-full items-center">
+            <Multiselect
+              disabled={disabled}
+              options={data?.node?.template?.[name]?.options || []}
+              values={data?.node?.template?.[name]?.value || []}
+              id={"multiselect-" + name}
+              onValueChange={handleOnNewValue}
+            />
           </div>
         </Case>
 
