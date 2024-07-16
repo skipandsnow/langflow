@@ -4,6 +4,7 @@ import warnings
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, Coroutine, Optional, Union
 from uuid import UUID
+import os
 
 from cryptography.fernet import Fernet
 from fastapi import Depends, HTTPException, Security, status
@@ -18,6 +19,7 @@ from langflow.services.database.models.api_key.model import ApiKey
 from langflow.services.database.models.user.crud import get_user_by_id, get_user_by_username, update_user_last_login_at
 from langflow.services.database.models.user.model import User
 from langflow.services.deps import get_session, get_settings_service
+from ldap3 import Server, Connection, ALL
 
 oauth2_login = OAuth2PasswordBearer(tokenUrl="api/v1/login", auto_error=False)
 
@@ -182,6 +184,42 @@ def verify_password(plain_password, hashed_password):
     settings_service = get_settings_service()
     return settings_service.auth_settings.pwd_context.verify(plain_password, hashed_password)
 
+def verify_password_from_ldap(username, user_password) -> bool:
+
+    # Set up LDAP server connection information
+    server_uri = os.getenv("LANGFLOW_LDAP_SERVER_HOST", "localhost")
+    manager_dn = os.getenv("LANGFLOW_LDAP_MANAGER_DN", "cn=admin,dc=example,dc=org")
+    manager_password = os.getenv("LANGFLOW_LDAP_MANAGER_PASSWORD", "manager_password")
+    user_search_base = os.getenv("LANGFLOW_LDAP_SEARCH_BASE", "ou=users,dc=example,dc=org")
+
+    # Establish a connection to the LDAP server
+    server = Server(server_uri)
+    conn = Connection(server, manager_dn, manager_password)
+    try:
+        # Bind as the manager
+        if not conn.bind():
+            print('Error: Could not bind as manager.')
+            return False
+
+        # Search for the user's dn
+        conn.search(user_search_base, f'(uid={username})', attributes=['cn'])
+        if not conn.entries:
+            print('Error: User not found.')
+            return False
+        user_dn = conn.entries[0].entry_dn
+
+        # Attempt to bind as the user
+        user_conn = Connection(server, user_dn, user_password)
+        print(user_password)
+        if user_conn.bind():
+            print('Success: Password verified.')
+            return True
+        else:
+            print('Error: Password verification failed.')
+            return False
+    finally:
+        # Ensure the connection is closed
+        conn.unbind()
 
 def get_password_hash(password):
     settings_service = get_settings_service()
@@ -329,7 +367,10 @@ def authenticate_user(username: str, password: str, db: Session = Depends(get_se
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Waiting for approval")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user")
 
-    return user if verify_password(password, user.password) else None
+    if os.getenv("LANGFLOW_LDAP_AUTH", "false"):
+        return user if verify_password_from_ldap(username, password) else None
+    else:
+        return user if verify_password(password, user.password) else None
 
 
 def add_padding(s):
