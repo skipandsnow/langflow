@@ -14,6 +14,7 @@ from langflow.io import (
 )
 from langflow.schema import Data
 from langchain.embeddings.base import Embeddings
+from urllib.parse import urlunparse
 
 
 class QdrantVectorStoreComponent(LCVectorStoreComponent):
@@ -39,15 +40,27 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
             value="Cosine",
             advanced=True,
         ),
-        StrInput(name="content_payload_key", display_name="Content Payload Key", value="page_content", advanced=True),
-        StrInput(name="metadata_payload_key", display_name="Metadata Payload Key", value="metadata", advanced=True),
+        StrInput(
+            name="content_payload_key",
+            display_name="Content Payload Key",
+            value="page_content",
+            advanced=True,
+        ),
+        StrInput(
+            name="metadata_payload_key",
+            display_name="Metadata Payload Key",
+            value="metadata",
+            advanced=True,
+        ),
         MultilineInput(name="search_query", display_name="Search Query"),
         DataInput(
             name="ingest_data",
             display_name="Ingest Data",
             is_list=True,
         ),
-        HandleInput(name="embedding", display_name="Embedding", input_types=["Embeddings"]),
+        HandleInput(
+            name="embedding", display_name="Embedding", input_types=["Embeddings"]
+        ),
         IntInput(
             name="number_of_results",
             display_name="Number of Results",
@@ -61,7 +74,11 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
         return self._build_qdrant()
 
     def _build_qdrant(self) -> Qdrant:
+
+        netloc = f"{self.host}:{self.port}"
+
         qdrant_kwargs = {
+            "url": urlunparse(("http", netloc, '','','','')) if self.host and self.port else None,
             "collection_name": self.collection_name,
             "content_payload_key": self.content_payload_key,
             "metadata_payload_key": self.metadata_payload_key,
@@ -73,7 +90,9 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
             "grpc_port": int(self.grpc_port),  # Garantir que grpc_port seja um inteiro
             "api_key": self.api_key,
             "prefix": self.prefix,
-            "timeout": int(self.timeout) if self.timeout else None,  # Garantir que timeout seja um inteiro
+            "timeout": (
+                int(self.timeout) if self.timeout else None
+            ),  # Garantir que timeout seja um inteiro
             "path": self.path if self.path else None,
             "url": self.url if self.url else None,
         }
@@ -91,7 +110,9 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
             raise ValueError("Invalid embedding object")
 
         if documents:
-            qdrant = Qdrant.from_documents(documents, embedding=self.embedding, **qdrant_kwargs)
+            qdrant = Qdrant.from_documents(
+                documents, embedding=self.embedding, **qdrant_kwargs
+            )
         else:
             from qdrant_client import QdrantClient
 
@@ -103,7 +124,11 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
     def search_documents(self) -> List[Data]:
         vector_store = self._build_qdrant()
 
-        if self.search_query and isinstance(self.search_query, str) and self.search_query.strip():
+        if (
+            self.search_query
+            and isinstance(self.search_query, str)
+            and self.search_query.strip()
+        ):
             docs = vector_store.similarity_search(
                 query=self.search_query,
                 k=self.number_of_results,
