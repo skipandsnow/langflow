@@ -30,6 +30,7 @@ import {
 import { Separator } from "../ui/separator";
 import MenuBar from "./components/menuBar";
 import { useTranslation } from "react-i18next";
+import logoCtbc from "../../assets/logo-ctbc-circle.png";
 
 export default function Header(): JSX.Element {
   const notificationCenter = useAlertStore((state) => state.notificationCenter);
@@ -87,7 +88,8 @@ export default function Header(): JSX.Element {
     <div className="header-arrangement">
       <div className="header-start-display lg:w-[407px]">
         <Link to="/all" className="cursor-pointer" onClick={checkForChanges}>
-          <span className="ml-4 text-2xl">⛓️</span>
+          {/* <span className="ml-4 text-2xl">⛓️</span> */}
+          <img src={logoCtbc} alt="CTBC Logo" className="ml-2 h-8" />
         </Link>
         {showArrowReturnIcon && (
           <Button

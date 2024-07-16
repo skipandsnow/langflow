@@ -16,6 +16,7 @@ import {
   loginInputStateType,
 } from "../../types/components";
 import { useTranslation } from "react-i18next";
+import logoCtbc from "../../assets/logo-ctbc.png";
 
 export default function LoginPage(): JSX.Element {
   const { t } = useTranslation();
@@ -69,10 +70,13 @@ export default function LoginPage(): JSX.Element {
       className="h-full w-full"
     >
       <div className="flex h-full w-full flex-col items-center justify-center bg-muted bg-ctbc-bg bg-cover bg-center">
-        <div className="flex w-72 flex-col items-center justify-center gap-2">
-          <img src="src/assets/logo-ctbc.png" alt="CTBC Logo" className="mb-4 h-20" />
-          <span className="mb-6 text-4xl font-extrabold text-primary">
+        <div className="flex w-80 flex-col items-center justify-center gap-2">
+          <img src={logoCtbc} alt="CTBC Logo" className="mb-4 h-20" />
+          <span className="text-4xl font-extrabold text-primary">
             {t("Sign in to Langflow")}
+          </span>
+          <span className="text-2xl font-extrabold text-primary">
+            (小小小達)
           </span>
           <div className="mb-3 w-full">
             <Form.Field name="username">
