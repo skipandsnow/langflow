@@ -73,10 +73,7 @@ export default function LoginPage(): JSX.Element {
         <div className="flex w-80 flex-col items-center justify-center gap-2">
           <img src={logoCtbc} alt="CTBC Logo" className="mb-4 h-20" />
           <span className="text-4xl font-extrabold text-primary">
-            {t("Sign in to Langflow")}
-          </span>
-          <span className="text-2xl font-extrabold text-primary">
-            (小小小達)
+            {t("Small Davinci")}
           </span>
           <div className="mb-3 w-full">
             <Form.Field name="username">

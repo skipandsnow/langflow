@@ -17,6 +17,7 @@ import {
   signUpInputStateType,
 } from "../../types/components";
 import { useTranslation } from "react-i18next";
+import logoCtbc from "../../assets/logo-ctbc.png";
 
 export default function SignUp(): JSX.Element {
   const { t } = useTranslation();
@@ -83,10 +84,10 @@ export default function SignUp(): JSX.Element {
       }}
       className="h-full w-full"
     >
-      <div className="flex h-full w-full flex-col items-center justify-center bg-muted">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-muted bg-ctbc-bg bg-cover bg-center">
         <div className="flex w-72 flex-col items-center justify-center gap-2">
-          <span className="mb-4 text-5xl">⛓️</span>
-          <span className="mb-6 text-2xl font-semibold text-primary">
+          <img src={logoCtbc} alt="CTBC Logo" className="mb-4 h-20" />
+          <span className="text-4xl font-extrabold text-primary">
             {t("Sign up to Langflow")}
           </span>
           <div className="mb-3 w-full">

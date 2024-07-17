@@ -210,7 +210,6 @@ def verify_password_from_ldap(username, user_password) -> bool:
 
         # Attempt to bind as the user
         user_conn = Connection(server, user_dn, user_password)
-        print(user_password)
         if user_conn.bind():
             print('Success: Password verified.')
             return True
@@ -367,7 +366,7 @@ def authenticate_user(username: str, password: str, db: Session = Depends(get_se
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Waiting for approval")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user")
 
-    if os.getenv("LANGFLOW_LDAP_AUTH", "false"):
+    if os.getenv("LANGFLOW_LDAP_AUTH", "false") == "true":
         return user if verify_password_from_ldap(username, password) else None
     else:
         return user if verify_password(password, user.password) else None
