@@ -62,6 +62,7 @@ COPY pypi ./pypi
 RUN python -m pip install requests --user && cd ./scripts && python update_dependencies.py
 
 RUN npm config set maxsockets 1
+RUN cd src/backend/base && poetry lock --no-update
 # Prepare frontend dependencies
 RUN make install_frontendci
 
