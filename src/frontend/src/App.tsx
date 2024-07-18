@@ -1,5 +1,6 @@
 import "./locales/i18n";
 import { useContext, useEffect, useState } from "react";
+import { Cookies } from "react-cookie";
 import { ErrorBoundary } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
 import "reactflow/dist/style.css";
@@ -11,6 +12,7 @@ import LoadingComponent from "./components/loadingComponent";
 import {
   FETCH_ERROR_DESCRIPION,
   FETCH_ERROR_MESSAGE,
+  LANGFLOW_AUTO_LOGIN_OPTION,
 } from "./constants/constants";
 import { AuthContext } from "./contexts/authContext";
 import { autoLogin } from "./controllers/API";
@@ -28,13 +30,14 @@ import { useFolderStore } from "./stores/foldersStore";
 export default function App() {
   useTrackLastVisitedPath();
   const isLoading = useFlowsManagerStore((state) => state.isLoading);
-  const { isAuthenticated, login, setUserData, setAutoLogin, getUser } =
+  const { isAuthenticated, login, setUserData, setAutoLogin, getUser, logout } =
     useContext(AuthContext);
   const setLoading = useAlertStore((state) => state.setLoading);
   const refreshStars = useDarkStore((state) => state.refreshStars);
   const dark = useDarkStore((state) => state.dark);
 
   useGetVersionQuery();
+  const cookies = new Cookies();
 
   const isLoadingFolders = useFolderStore((state) => state.isLoadingFolders);
 
@@ -61,7 +64,7 @@ export default function App() {
       .then(async (user) => {
         if (user && user["access_token"]) {
           user["refresh_token"] = "auto";
-          login(user["access_token"]);
+          login(user["access_token"], "auto");
           setUserData(user);
           setAutoLogin(true);
           fetchAllData();
@@ -70,6 +73,14 @@ export default function App() {
       .catch(async (error) => {
         if (error.name !== "CanceledError") {
           setAutoLogin(false);
+          if (
+            cookies.get(LANGFLOW_AUTO_LOGIN_OPTION) === "auto" &&
+            isAuthenticated
+          ) {
+            logout();
+            return;
+          }
+
           if (isAuthenticated && !isLoginPage) {
             getUser();
             fetchAllData();
