@@ -1,15 +1,16 @@
 #!/bin/bash
-
-docker build -t langflow-builder-base:1.0.9-v4 -f docker/build_langflow_builder_base.Dockerfile .
+docker build -t langflow-builder-base:1.0.9-v5 -f docker/build_langflow_builder_base.Dockerfile .
 
 # Run qdrant
-docker run -d -p 6333:6333 qdrant/qdrant
+docker pull qdrant/qdrant:v1.10.1
+docker run -d -p 6333:6333 qdrant/qdrant:v1.10.1
 
 # Run postgres
 docker run --name postgres -d -p 5432:5432 -e POSTGRES_PASSWORD=llm -e POSTGRES_USER=llm postgres:16.3
 
 # Run ollama
-docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+docker pull ollama/ollama:0.2.5
+docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama:0.2.5
 
 # Run openldap
 docker run -p 1389:1389 -d --rm --name openldap \
