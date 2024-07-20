@@ -29,3 +29,8 @@ docker run -it --name code-server -p 127.0.0.1:8080:8080 \
   -u "$(id -u):$(id -g)" \
   codercom/code-server:ubuntu-python3.12
   code-server "--bind-addr=0.0.0.0:8080"
+
+# Set git safe
+git config --global --add safe.directory /app/langflow
+
+
