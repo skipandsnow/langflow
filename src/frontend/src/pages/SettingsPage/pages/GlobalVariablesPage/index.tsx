@@ -11,8 +11,10 @@ import { Badge } from "../../../../components/ui/badge";
 import { deleteGlobalVariable } from "../../../../controllers/API";
 import useAlertStore from "../../../../stores/alertStore";
 import { useGlobalVariablesStore } from "../../../../stores/globalVariablesStore/globalVariables";
+import { useTranslation } from "react-i18next";
 
 export default function GlobalVariablesPage() {
+  const { t } = useTranslation();
   const globalVariablesEntries = useGlobalVariablesStore(
     (state) => state.globalVariablesEntries,
   );
@@ -132,21 +134,21 @@ export default function GlobalVariablesPage() {
       <div className="flex w-full items-center justify-between gap-4 space-y-0.5">
         <div className="flex w-full flex-col">
           <h2 className="flex items-center text-lg font-semibold tracking-tight">
-            Global Variables
+            {t("Global Variables")}
             <ForwardedIconComponent
               name="Globe"
               className="ml-2 h-5 w-5 text-primary"
             />
           </h2>
           <p className="text-sm text-muted-foreground">
-            Manage global variables and assign them to fields.
+            {t("Manage global variables and assign them to fields.")}
           </p>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
           <AddNewVariableButton asChild>
             <Button data-testid="api-key-button-store" variant="primary">
               <IconComponent name="Plus" className="w-4" />
-              Add New
+                {t("Add New")}
             </Button>
           </AddNewVariableButton>
         </div>

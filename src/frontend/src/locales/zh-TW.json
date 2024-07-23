@@ -146,5 +146,22 @@
   "Select items to delete": "刪除選擇項目",
   "Select items to duplicate": "新增選擇項目複本",
   "Discussions": "論壇",
-  "Help": "幫助"
+  "Help": "幫助",
+  "Choose the image that appears as your profile picture.": "選擇顯示您個人資料圖片",
+  "Profile Picture": "個人資料圖片",
+  "Manage settings related to Langflow and your account.": "管理您的帳戶與相關設定",
+  "Manage the general settings for Langflow.": "一般管理設定",
+  "General": "通用",
+  "Global Variables": "全域變數",
+  "Langflow API": "API",
+  "Shortcuts": "快捷鍵",
+  "Messages": "訊息",
+  "Manage global variables and assign them to fields.": "管理全域變數並遷入欄位",
+  "No Data Available": "無資料",
+  "Add New": "新增",
+  "Inspect, edit and remove messages to explore and refine model behaviors.": "檢查、編輯和刪除訊息以探索和完善模型行為。",
+  "Manage Shortcuts for quick access to frequently used actions.": "管理快捷鍵以存取常用操作。",
+  "Functionality": "功能",
+  "Keyboard Shortcut": "鍵盤快捷鍵",
+  "Restore": "復原"
 }

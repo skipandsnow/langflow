@@ -114,7 +114,7 @@ export default function SignUp(): JSX.Element {
               </Form.Message>
             </Form.Field>
           </div>
-          <div className="mb-3 w-full">
+          {/* <div className="mb-3 w-full">
             <Form.Field name="password" serverInvalid={password != cnfPassword}>
               <Form.Label className="data-[invalid]:label-invalid">
                 {t("Password")} <span className="font-medium text-destructive">*</span>
@@ -168,11 +168,11 @@ export default function SignUp(): JSX.Element {
                 {t("Please confirm your password")}
               </Form.Message>
             </Form.Field>
-          </div>
+          </div> */}
           <div className="w-full">
             <Form.Submit asChild>
               <Button
-                disabled={isDisabled}
+                // disabled={isDisabled}
                 type="submit"
                 className="mr-3 mt-6 w-full"
                 onClick={() => {

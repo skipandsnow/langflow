@@ -185,6 +185,8 @@ def verify_password(plain_password, hashed_password):
     return settings_service.auth_settings.pwd_context.verify(plain_password, hashed_password)
 
 def verify_password_from_ldap(username, user_password) -> bool:
+    # Set username to lower case
+    username = username.lower()
 
     # Set up LDAP server connection information
     server_uri = os.getenv("LANGFLOW_LDAP_SERVER_HOST", "localhost")
@@ -356,8 +358,10 @@ def create_refresh_token(refresh_token: str, db: Session = Depends(get_session))
 
 
 def authenticate_user(username: str, password: str, db: Session = Depends(get_session)) -> Optional[User]:
-    user = get_user_by_username(db, username)
+    # Set username to lower case
+    username = username.lower()
 
+    user = get_user_by_username(db, username)
     if not user:
         return None
 

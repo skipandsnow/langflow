@@ -1,6 +1,6 @@
-import { ProfilePicturesQueryResponse } from "@/controllers/API/queries/files";
+import { useGetProfilePicturesQuery } from "@/controllers/API/queries/files";
 import * as Form from "@radix-ui/react-form";
-import { UseQueryResult } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { Button } from "../../../../../../components/ui/button";
 import {
   Card,
@@ -12,12 +12,13 @@ import {
 } from "../../../../../../components/ui/card";
 import { gradients } from "../../../../../../utils/styleUtils";
 import ProfilePictureChooserComponent from "./components/profilePictureChooserComponent";
+import { useTranslation } from "react-i18next";
 
 type ProfilePictureFormComponentProps = {
   profilePicture: string;
   handleInput: (event: any) => void;
   handlePatchProfilePicture: (gradient: string) => void;
-  handleGetProfilePictures: UseQueryResult<ProfilePicturesQueryResponse>;
+  handleGetProfilePictures: () => undefined;
   userData: any;
 };
 const ProfilePictureFormComponent = ({
@@ -27,7 +28,9 @@ const ProfilePictureFormComponent = ({
   handleGetProfilePictures,
   userData,
 }: ProfilePictureFormComponentProps) => {
-  const { data: response, isFetching } = handleGetProfilePictures;
+  const { data: response, isFetching } = useGetProfilePicturesQuery({});
+
+  const { t } = useTranslation();
 
   return (
     <Form.Root
@@ -38,9 +41,9 @@ const ProfilePictureFormComponent = ({
     >
       <Card x-chunk="dashboard-04-chunk-1">
         <CardHeader>
-          <CardTitle>Profile Picture</CardTitle>
+          <CardTitle>{t("Profile Picture")}</CardTitle>
           <CardDescription>
-            Choose the image that appears as your profile picture.
+            {t("Choose the image that appears as your profile picture.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -64,7 +67,7 @@ const ProfilePictureFormComponent = ({
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
           <Form.Submit asChild>
-            <Button type="submit">Save</Button>
+            <Button type="submit">{t("Save")}</Button>
           </Form.Submit>
         </CardFooter>
       </Card>

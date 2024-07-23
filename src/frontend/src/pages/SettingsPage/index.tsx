@@ -4,8 +4,10 @@ import ForwardedIconComponent from "../../components/genericIconComponent";
 import PageLayout from "../../components/pageLayout";
 import SidebarNav from "../../components/sidebarComponent";
 import useFlowsManagerStore from "../../stores/flowsManagerStore";
+import { useTranslation } from "react-i18next";
 
 export default function SettingsPage(): JSX.Element {
+  const { t } = useTranslation();
   const pathname = location.pathname;
   const setCurrentFlowId = useFlowsManagerStore(
     (state) => state.setCurrentFlowId,
@@ -16,7 +18,7 @@ export default function SettingsPage(): JSX.Element {
 
   const sidebarNavItems = [
     {
-      title: "General",
+      title: t("General"),
       href: "/settings/general",
       icon: (
         <ForwardedIconComponent
@@ -26,7 +28,7 @@ export default function SettingsPage(): JSX.Element {
       ),
     },
     {
-      title: "Global Variables",
+      title: t("Global Variables"),
       href: "/settings/global-variables",
       icon: (
         <ForwardedIconComponent
@@ -36,7 +38,7 @@ export default function SettingsPage(): JSX.Element {
       ),
     },
     {
-      title: "Langflow API",
+      title: t("Langflow API"),
       href: "/settings/api-keys",
       icon: (
         <ForwardedIconComponent
@@ -46,7 +48,7 @@ export default function SettingsPage(): JSX.Element {
       ),
     },
     {
-      title: "Shortcuts",
+      title: t("Shortcuts"),
       href: "/settings/shortcuts",
       icon: (
         <ForwardedIconComponent
@@ -56,7 +58,7 @@ export default function SettingsPage(): JSX.Element {
       ),
     },
     {
-      title: "Messages",
+      title: t("Messages"),
       href: "/settings/messages",
       icon: (
         <ForwardedIconComponent
@@ -68,8 +70,8 @@ export default function SettingsPage(): JSX.Element {
   ];
   return (
     <PageLayout
-      title="Settings"
-      description="Manage the general settings for Langflow."
+      title={t("Settings")}
+      description={t("Manage the general settings for Langflow.")}
     >
       <div className="flex h-full w-full space-y-8 lg:flex-row lg:space-x-8 lg:space-y-0">
         <aside className="flex h-full shrink-0 flex-col space-y-6 lg:w-[20vw]">
