@@ -59,11 +59,12 @@ COPY src/ ./src
 COPY scripts ./scripts
 COPY Makefile .env ./
 COPY pypi ./pypi
-RUN python -m pip install requests --user && cd ./scripts && python update_dependencies.py
+RUN python -m pip install requests --user
 
+# Set this config to prevent slow internet connection timeout
 RUN npm config set maxsockets 1
-RUN cd src/backend/base && poetry lock --no-update
-# Prepare frontend dependencies
+
+# Install frontend dependencies
 RUN make install_frontendci
 
 # # Prepare backend dependencies
