@@ -10,10 +10,12 @@ export default function TableOptions({
   deleteRow,
   hasSelection,
   stateChange,
+  addRow,
 }: {
   resetGrid: () => void;
   duplicateRow?: () => void;
   deleteRow?: () => void;
+  addRow?: () => void;
   hasSelection: boolean;
   stateChange: boolean;
 }): JSX.Element {
@@ -21,25 +23,18 @@ export default function TableOptions({
   return (
     <div className={cn("absolute bottom-3 left-6")}>
       <div className="flex items-center gap-3">
-        <div>
-          <ShadTooltip content="Reset Columns">
-            <Button
-              unstyled
-              onClick={() => {
-                resetGrid();
-              }}
-              disabled={!stateChange}
-            >
-              <IconComponent
-                name="RotateCcw"
-                strokeWidth={2}
-                className={cn(
-                  "h-5 w-5 text-primary transition-all hover:text-accent-foreground",
-                )}
-              />
-            </Button>
-          </ShadTooltip>
-        </div>
+        {addRow && (
+          <div>
+            <ShadTooltip content={"Add a new row"}>
+              <Button unstyled onClick={addRow}>
+                <IconComponent
+                  name="Plus"
+                  className={cn("h-5 w-5 text-primary transition-all")}
+                />
+              </Button>
+            </ShadTooltip>
+          </div>
+        )}
         {duplicateRow && (
           <div>
             <ShadTooltip
@@ -54,7 +49,10 @@ export default function TableOptions({
               <Button unstyled onClick={duplicateRow} disabled={!hasSelection}>
                 <IconComponent
                   name="Copy"
-                  className={cn("h-5 w-5 text-primary transition-all")}
+                  className={cn(
+                    "h-5 w-5 transition-all",
+                    hasSelection ? "text-primary" : "text-muted-foreground",
+                  )}
                 />
               </Button>
             </ShadTooltip>
@@ -75,14 +73,35 @@ export default function TableOptions({
                 <IconComponent
                   name="Trash2"
                   className={cn(
-                    "h-5 w-5 text-primary transition-all",
-                    !hasSelection ? "" : "hover:text-status-red",
+                    "h-5 w-5 transition-all",
+                    !hasSelection
+                      ? "text-muted-foreground"
+                      : "text-primary hover:text-status-red",
                   )}
                 />
               </Button>
             </ShadTooltip>
           </div>
         )}{" "}
+        <div>
+          <ShadTooltip content="Reset Columns">
+            <Button
+              unstyled
+              onClick={() => {
+                resetGrid();
+              }}
+              disabled={!stateChange}
+            >
+              <IconComponent
+                name="RotateCcw"
+                strokeWidth={2}
+                className={cn(
+                  "h-5 w-5 text-primary transition-all hover:text-accent-foreground",
+                )}
+              />
+            </Button>
+          </ShadTooltip>
+        </div>
       </div>
     </div>
   );
