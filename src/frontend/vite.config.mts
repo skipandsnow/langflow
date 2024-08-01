@@ -34,6 +34,10 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
+      "process.env.ACCESS_TOKEN_EXPIRE_SECONDS": JSON.stringify(
+        process.env.ACCESS_TOKEN_EXPIRE_SECONDS,
+      ),
+      "process.env.CI": JSON.stringify(process.env.CI),
       "process.env.LANGFLOW_DEFAULT_LOCALE": JSON.stringify(process.env.LANGFLOW_DEFAULT_LOCALE)
     },
     plugins: [react(), svgr(), tsconfigPaths()],
