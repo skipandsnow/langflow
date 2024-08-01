@@ -1,3 +1,4 @@
+import { useAddUser } from "@/controllers/API/queries/auth";
 import * as Form from "@radix-ui/react-form";
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,7 +10,6 @@ import {
   CONTROL_INPUT_STATE,
   SIGN_UP_SUCCESS,
 } from "../../constants/constants";
-import { addUser } from "../../controllers/API";
 import useAlertStore from "../../stores/alertStore";
 import {
   UserInputType,
@@ -31,6 +31,8 @@ export default function SignUp(): JSX.Element {
   const setErrorData = useAlertStore((state) => state.setErrorData);
   const navigate = useNavigate();
 
+  const { mutate: mutateAddUser } = useAddUser();
+
   function handleInput({
     target: { name, value },
   }: inputHandlerEventType): void {
@@ -50,14 +52,15 @@ export default function SignUp(): JSX.Element {
       username: username.trim().toLowerCase(),
       password: password.trim(),
     };
-    addUser(newUser)
-      .then((user) => {
+
+    mutateAddUser(newUser, {
+      onSuccess: () => {
         setSuccessData({
           title: SIGN_UP_SUCCESS,
         });
         navigate("/login");
-      })
-      .catch((error) => {
+      },
+      onError: (error) => {
         const {
           response: {
             data: { detail },
@@ -67,8 +70,8 @@ export default function SignUp(): JSX.Element {
           title: SIGNUP_ERROR_ALERT,
           list: [detail],
         });
-        return;
-      });
+      },
+    });
   }
 
   return (

@@ -1,3 +1,6 @@
+import FeatureFlags from "@/../feature-config.json";
+import useAuthStore from "@/stores/authStore";
+import { useStoreStore } from "@/stores/storeStore";
 import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import ForwardedIconComponent from "../../components/genericIconComponent";
@@ -12,12 +15,26 @@ export default function SettingsPage(): JSX.Element {
   const setCurrentFlowId = useFlowsManagerStore(
     (state) => state.setCurrentFlowId,
   );
+
+  const autoLogin = useAuthStore((state) => state.autoLogin);
+  const hasStore = useStoreStore((state) => state.hasStore);
+
+  // Hides the General settings if there is nothing to show
+  const showGeneralSettings =
+    FeatureFlags.ENABLE_PROFILE_ICONS || hasStore || !autoLogin;
+
   useEffect(() => {
     setCurrentFlowId("");
   }, [pathname]);
 
-  const sidebarNavItems = [
-    {
+  const sidebarNavItems: {
+    href?: string;
+    title: string;
+    icon: React.ReactNode;
+  }[] = [];
+
+  if (showGeneralSettings) {
+    sidebarNavItems.push({
       title: t("General"),
       href: "/settings/general",
       icon: (
@@ -26,7 +43,10 @@ export default function SettingsPage(): JSX.Element {
           className="w-4 flex-shrink-0 justify-start stroke-[1.5]"
         />
       ),
-    },
+    });
+  }
+
+  sidebarNavItems.push(
     {
       title: t("Global Variables"),
       href: "/settings/global-variables",
@@ -67,7 +87,7 @@ export default function SettingsPage(): JSX.Element {
         />
       ),
     },
-  ];
+  );
   return (
     <PageLayout
       title={t("Settings")}
