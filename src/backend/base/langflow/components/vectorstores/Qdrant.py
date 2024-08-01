@@ -25,7 +25,7 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
 
     inputs = [
         StrInput(name="collection_name", display_name="Collection Name", required=True),
-        StrInput(name="host", display_name="Host", value="localhost", advanced=True),
+        StrInput(name="host", display_name="Host", value="localhost"),
         IntInput(name="port", display_name="Port", value=6333, advanced=True),
         IntInput(name="grpc_port", display_name="gRPC Port", value=6334, advanced=True),
         SecretStrInput(name="api_key", display_name="API Key", advanced=True),
@@ -75,10 +75,14 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
 
     def _build_qdrant(self) -> Qdrant:
 
-        netloc = f"{self.host}:{self.port}"
+        if self.url:
+            url = self.url
+        elif self.host and self.port :
+            url = urlunparse(("http", f"{self.host}:{self.port}", '','','',''))
+        else:
+            url = None
 
         qdrant_kwargs = {
-            "url": urlunparse(("http", netloc, '','','','')) if self.host and self.port else None,
             "collection_name": self.collection_name,
             "content_payload_key": self.content_payload_key,
             "metadata_payload_key": self.metadata_payload_key,
@@ -111,7 +115,7 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
 
         if documents:
             qdrant = Qdrant.from_documents(
-                documents, embedding=self.embedding, **qdrant_kwargs
+                documents, embedding=self.embedding, **qdrant_kwargs, url=url
             )
         else:
             from qdrant_client import QdrantClient
