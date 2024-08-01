@@ -47,7 +47,7 @@ export default function SignUp(): JSX.Element {
   function handleSignup(): void {
     const { username, password } = inputState;
     const newUser: UserInputType = {
-      username: username.trim(),
+      username: username.trim().toLowerCase(),
       password: password.trim(),
     };
     addUser(newUser)

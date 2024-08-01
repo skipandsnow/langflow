@@ -46,13 +46,19 @@ class DatabaseService(Service):
         if settings_service.settings.database_url and settings_service.settings.database_url.startswith("sqlite"):
             connect_args = {"check_same_thread": False}
         else:
-            connect_args = {}
+            connect_args = {
+                "keepalives": 1,           # enable TCP keepalives
+                "keepalives_idle": 30,     # inactivity seconds
+                "keepalives_interval": 5,  # retransmission interval
+                "keepalives_count": 5      # max number of keepalives to transmit
+            }
         try:
             return create_engine(
                 self.database_url,
                 connect_args=connect_args,
                 pool_size=self.settings_service.settings.pool_size,
                 max_overflow=self.settings_service.settings.max_overflow,
+                pool_pre_ping=True
             )
         except sa.exc.NoSuchModuleError as exc:
             # sqlalchemy.exc.NoSuchModuleError: Can't load plugin: sqlalchemy.dialects:postgres

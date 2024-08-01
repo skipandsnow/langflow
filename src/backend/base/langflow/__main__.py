@@ -339,7 +339,8 @@ def fetch_latest_version(package_name: str, include_prerelease: bool) -> Optiona
 
 
 def build_version_notice(current_version: str, package_name: str) -> str:
-    latest_version = fetch_latest_version(package_name, is_prerelease(current_version))
+    latest_version = current_version
+    # latest_version = fetch_latest_version(package_name, is_prerelease(current_version))
     if latest_version and pkg_version.parse(current_version) < pkg_version.parse(latest_version):
         release_type = "pre-release" if is_prerelease(latest_version) else "version"
         return f"A new {release_type} of {package_name} is available: {latest_version}"
