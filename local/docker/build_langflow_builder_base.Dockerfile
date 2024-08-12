@@ -39,11 +39,16 @@ RUN apt-get update \
     # deps for installing poetry
     curl \
     # deps for building python deps
-    build-essential npm \
+    build-essential cmake gcc g++ libevent-dev libssl-dev zlib1g-dev \
     # gcc
     gcc \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# installs nvm (Node Version Manager)
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+# download and install Node.js (you may need to restart the terminal)
+RUN . ~/.bashrc && nvm install --lts
 
 # Install Poetry
 RUN --mount=type=cache,target=/root/.cache \
@@ -59,18 +64,18 @@ COPY src/ ./src
 COPY scripts ./scripts
 COPY Makefile .env ./
 COPY pypi ./pypi
-RUN python -m pip install requests --user
+RUN python -m pip install requests setuptools wheel pybind11 poetry-core cmake --user
 
 # Set this config to prevent slow internet connection timeout
-RUN npm config set maxsockets 1
+# RUN npm config set maxsockets 1
 
 # Install frontend dependencies
-RUN make install_frontendci
+RUN . ~/.bashrc && make install_frontendci
 
 # # Prepare backend dependencies
 RUN poetry lock --no-update
 RUN poetry install --without dev --sync -E deploy -E couchbase -E cassio
 
 # Prepare compile wheels
-RUN pip install pypiserver
-RUN mkdir -p pypi/wheels && pip download setuptools wheel pybind11 poetry-core cmake -d pypi/wheels/
+# RUN pip install pypiserver
+# RUN mkdir -p pypi/wheels && pip download setuptools wheel pybind11 poetry-core cmake -d pypi/wheels/
