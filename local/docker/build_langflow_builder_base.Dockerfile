@@ -39,7 +39,7 @@ RUN apt-get update \
     # deps for installing poetry
     curl \
     # deps for building python deps
-    build-essential cmake gcc g++ libevent-dev libssl-dev zlib1g-dev \
+    build-essential cmake gcc g++ libevent-dev libssl-dev zlib1g-dev libudev1 \
     # gcc
     gcc \
     && apt-get clean \
@@ -64,18 +64,18 @@ COPY src/ ./src
 COPY scripts ./scripts
 COPY Makefile .env ./
 COPY pypi ./pypi
-RUN python -m pip install requests setuptools wheel pybind11 poetry-core cmake --user
+RUN python -m pip install requests --user
 
 # Set this config to prevent slow internet connection timeout
 # RUN npm config set maxsockets 1
 
 # Install frontend dependencies
-RUN . ~/.bashrc && make install_frontendci
+RUN . ~/.bashrc && make install_frontend
 
 # # Prepare backend dependencies
 RUN poetry lock --no-update
 RUN poetry install --without dev --sync -E deploy -E couchbase -E cassio
 
 # Prepare compile wheels
-# RUN pip install pypiserver
-# RUN mkdir -p pypi/wheels && pip download setuptools wheel pybind11 poetry-core cmake -d pypi/wheels/
+RUN pip install pypiserver
+RUN mkdir -p pypi/wheels && pip download setuptools wheel pybind11 poetry-core cmake -d pypi/wheels/

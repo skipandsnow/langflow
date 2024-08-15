@@ -10,7 +10,7 @@ FROM python:3.12.3-slim AS runtime
 
 RUN apt-get -y update \
     && apt-get install vim -y \
-    && apt-get install --no-install-recommends -y gpg\
+    && apt-get install --no-install-recommends -y gpg libudev1\
     curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
