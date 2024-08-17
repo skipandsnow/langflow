@@ -1,8 +1,10 @@
 import { usePostDownloadMultipleFlows } from "@/controllers/API/queries/flows";
-import { useDeleteFlows } from "@/controllers/API/queries/flows/use-delete-flows";
+import { useGetFolderQuery } from "@/controllers/API/queries/folders/use-get-folder";
+import { useGetFoldersQuery } from "@/controllers/API/queries/folders/use-get-folders";
+import useDeleteFlow from "@/hooks/flows/use-delete-flow";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import CardsWrapComponent from "../../../../components/cardsWrapComponent";
 import PaginatorComponent from "../../../../components/paginatorComponent";
 import { SkeletonCardComponent } from "../../../../components/skeletonCardComponent";
@@ -17,7 +19,6 @@ import { sortFlows } from "../../utils/sort-flows";
 import EmptyComponent from "../emptyComponent";
 import HeaderComponent from "../headerComponent";
 import CollectionCard from "./components/collectionCard";
-import useDeleteMultipleFlows from "./hooks/use-delete-multiple";
 import useDescriptionModal from "./hooks/use-description-modal";
 import useFilteredFlows from "./hooks/use-filtered-flows";
 import useDuplicateFlows from "./hooks/use-handle-duplicate";
@@ -30,15 +31,9 @@ export default function ComponentsComponent({
 }: {
   type?: string;
 }) {
-  const uploadFlow = useFlowsManagerStore((state) => state.uploadFlow);
-  const removeFlow = useFlowsManagerStore((state) => state.removeFlow);
   const isLoading = useFlowsManagerStore((state) => state.isLoading);
-  const setAllFlows = useFlowsManagerStore((state) => state.setAllFlows);
-  const allFlows = useFlowsManagerStore((state) => state.allFlows);
 
-  const flowsFromFolder = useFolderStore(
-    (state) => state.selectedFolder?.flows,
-  );
+  const { folderId } = useParams();
 
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
   const setErrorData = useAlertStore((state) => state.setErrorData);
@@ -54,47 +49,51 @@ export default function ComponentsComponent({
   const selectedFlowsComponentsCards = useFlowsManagerStore(
     (state) => state.selectedFlowsComponentsCards,
   );
+  const myCollectionId = useFolderStore((state) => state.myCollectionId);
 
-  const [handleFileDrop] = useFileDrop(uploadFlow, type)!;
+  const { data: currentFolder, isLoading: isLoadingCurrentFolder } =
+    useGetFolderQuery({
+      id: folderId ?? myCollectionId ?? "",
+    });
+  const flowsFromFolder = currentFolder?.flows ?? [];
+
+  const [filteredFlows, setFilteredFlows] =
+    useState<FlowType[]>(flowsFromFolder);
+
+  const handleFileDrop = useFileDrop(type);
   const [pageSize, setPageSize] = useState(20);
   const [pageIndex, setPageIndex] = useState(1);
-  const location = useLocation();
-  const all: FlowType[] = sortFlows(allFlows, type);
+  const all: FlowType[] = sortFlows(filteredFlows, type);
   const start = (pageIndex - 1) * pageSize;
   const end = start + pageSize;
   const data: FlowType[] = all?.slice(start, end);
+  const location = useLocation();
 
   const name = getNameByType(type);
 
-  const folderId = location?.state?.folderId;
-  const getFolderById = useFolderStore((state) => state.getFolderById);
-  const myCollectionId = useFolderStore((state) => state.myCollectionId);
-  const getFoldersApi = useFolderStore((state) => state.getFoldersApi);
-  const setFolderUrl = useFolderStore((state) => state.setFolderUrl);
-  const addFlow = useFlowsManagerStore((state) => state.addFlow);
-  const isLoadingFolders = useFolderStore((state) => state.isLoadingFolders);
   const setSelectedFolder = useFolderStore((state) => state.setSelectedFolder);
+
+  const { isLoading: isLoadingFolders } = useGetFoldersQuery();
 
   const [shouldSelectAll, setShouldSelectAll] = useState(true);
 
   const cardTypes = useMemo(() => {
-    if (window.location.pathname.includes("components")) {
+    if (location.pathname.includes("components")) {
       return "Components";
     }
-    if (window.location.pathname.includes("flows")) {
+    if (location.pathname.includes("flows")) {
       return "Flows";
     }
     return "Items";
-  }, [window.location]);
-
-  useEffect(() => {
-    setFolderUrl(folderId ?? "");
-    setSelectedFlowsComponentsCards([]);
-    handleSelectAll(false);
-    getFolderById(folderId ? folderId : myCollectionId);
   }, [location]);
 
-  useFilteredFlows(flowsFromFolder!, searchFlowsComponents, setAllFlows);
+  useEffect(() => {
+    setSelectedFlowsComponentsCards([]);
+    handleSelectAll(false);
+    setShouldSelectAll(true);
+  }, [folderId, location, myCollectionId]);
+
+  useFilteredFlows(flowsFromFolder, searchFlowsComponents, setFilteredFlows);
 
   const resetFilter = () => {
     setPageIndex(1);
@@ -114,13 +113,8 @@ export default function ComponentsComponent({
 
   const { handleDuplicate } = useDuplicateFlows(
     selectedFlowsComponentsCards,
-    addFlow,
-    allFlows,
+    flowsFromFolder,
     resetFilter,
-    getFoldersApi,
-    folderId,
-    myCollectionId!,
-    getFolderById,
     setSuccessData,
     setSelectedFlowsComponentsCards,
     handleSelectAll,
@@ -137,7 +131,7 @@ export default function ComponentsComponent({
       },
       {
         onSuccess: (data) => {
-          const selectedFlow = allFlows.find(
+          const selectedFlow = flowsFromFolder.find(
             (flow) => flow.id === selectedFlowsComponentsCards[0],
           );
 
@@ -189,35 +183,26 @@ export default function ComponentsComponent({
     handleExport,
   );
 
-  const { mutate: mutateDeleteMultipleFlows } = useDeleteFlows();
+  const deleteFlow = useDeleteFlow();
 
   const handleDeleteMultiple = () => {
-    mutateDeleteMultipleFlows(
-      {
-        flow_ids: selectedFlowsComponentsCards,
-      },
-      {
-        onSuccess: () => {
-          setAllFlows([]);
-          setSelectedFolder(null);
-
-          resetFilter();
-          getFoldersApi(true);
-          if (!folderId || folderId === myCollectionId) {
-            getFolderById(folderId ? folderId : myCollectionId);
-          }
-          setSuccessData({
-            title: "Selected items deleted successfully",
-          });
-        },
-        onError: () => {
-          setErrorData({
-            title: "Error deleting items",
-            list: ["Please try again"],
-          });
-        },
-      },
-    );
+    deleteFlow({ id: selectedFlowsComponentsCards })
+      .then(() => {
+        setSelectedFolder(null);
+        resetFilter();
+        setSelectedFlowsComponentsCards([]);
+        handleSelectAll(false);
+        setShouldSelectAll(true);
+        setSuccessData({
+          title: "Selected items deleted successfully",
+        });
+      })
+      .catch(() => {
+        setErrorData({
+          title: "Error deleting items",
+          list: ["Please try again"],
+        });
+      });
   };
 
   useSelectedFlows(entireFormValues, setSelectedFlowsComponentsCards);
@@ -227,28 +212,26 @@ export default function ComponentsComponent({
     type,
   );
 
-  const getTotalRowsCount = () => {
-    if (type === "all") return allFlows?.length;
-
-    return allFlows?.filter(
-      (f) => (f.is_component ?? false) === (type === "component"),
-    )?.length;
-  };
+  const totalRowsCount = filteredFlows?.length;
 
   return (
     <>
       <div className="flex w-full gap-4 pb-5">
-        {allFlows?.length > 0 && (
-          <HeaderComponent
-            shouldSelectAll={shouldSelectAll}
-            setShouldSelectAll={setShouldSelectAll}
-            handleDelete={() => handleSelectOptionsChange("delete")}
-            handleSelectAll={handleSelectAll}
-            handleDuplicate={() => handleSelectOptionsChange("duplicate")}
-            handleExport={() => handleSelectOptionsChange("export")}
-            disableFunctions={!(selectedFlowsComponentsCards?.length > 0)}
-          />
-        )}
+        <HeaderComponent
+          disabled={
+            isLoading ||
+            isLoadingFolders ||
+            isLoadingCurrentFolder ||
+            data?.length === 0
+          }
+          shouldSelectAll={shouldSelectAll}
+          setShouldSelectAll={setShouldSelectAll}
+          handleDelete={() => handleSelectOptionsChange("delete")}
+          handleSelectAll={handleSelectAll}
+          handleDuplicate={() => handleSelectOptionsChange("duplicate")}
+          handleExport={() => handleSelectOptionsChange("export")}
+          disableFunctions={!(selectedFlowsComponentsCards?.length > 0)}
+        />
       </div>
 
       <CardsWrapComponent
@@ -260,13 +243,16 @@ export default function ComponentsComponent({
           data-testid="cards-wrapper"
         >
           <div className="flex w-full flex-col gap-4">
-            {!isLoading && !isLoadingFolders && data?.length === 0 ? (
+            {!isLoading &&
+            !isLoadingFolders &&
+            !isLoadingCurrentFolder &&
+            data?.length === 0 ? (
               <EmptyComponent />
             ) : (
               <div className="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-2">
-                {isLoading === false &&
-                data?.length > 0 &&
-                isLoadingFolders === false ? (
+                {data?.length > 0 &&
+                isLoadingFolders === false &&
+                isLoadingCurrentFolder === false ? (
                   <>
                     {data?.map((item) => (
                       <FormProvider {...methods} key={item.id}>
@@ -297,7 +283,7 @@ export default function ComponentsComponent({
                 pageIndex={pageIndex}
                 pageSize={pageSize}
                 rowsCount={[10, 20, 50, 100]}
-                totalRowsCount={getTotalRowsCount()}
+                totalRowsCount={totalRowsCount}
                 paginate={(pageSize, pageIndex) => {
                   setPageIndex(pageIndex);
                   setPageSize(pageSize);

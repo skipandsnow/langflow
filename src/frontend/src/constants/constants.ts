@@ -648,6 +648,7 @@ export const LANGFLOW_SUPPORTED_TYPES = new Set([
   "int",
   "dict",
   "NestedDict",
+  "table",
 ]);
 
 export const priorityFields = new Set(["code", "template"]);
@@ -710,7 +711,7 @@ export const CREATE_API_KEY = `Don’t have an API key? Sign up at`;
 export const STATUS_BUILD = "Build to validate status.";
 export const STATUS_INACTIVE = "Execution blocked";
 export const STATUS_BUILDING = "Building...";
-export const SAVED_HOVER = "Last saved at ";
+export const SAVED_HOVER = "Last saved: ";
 export const RUN_TIMESTAMP_PREFIX = "Last Run: ";
 export const STARTER_FOLDER_NAME = "Starter Projects";
 export const PRIORITY_SIDEBAR_ORDER = [
@@ -772,8 +773,12 @@ export const defaultShortcuts = [
     shortcut: `${IS_MAC ? "Cmd" : "Ctrl"} + Shift + D`,
   },
   {
-    name: "Save",
+    name: "Changes Save",
     shortcut: `${IS_MAC ? "Cmd" : "Ctrl"} + S`,
+  },
+  {
+    name: "Save Component",
+    shortcut: `${IS_MAC ? "Cmd" : "Ctrl"} + Alt + S`,
   },
   {
     name: "Delete",
@@ -881,3 +886,8 @@ export const LANGFLOW_ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 - 60 * 60 * 0.1;
 export const LANGFLOW_ACCESS_TOKEN_EXPIRE_SECONDS_ENV =
   Number(process.env.ACCESS_TOKEN_EXPIRE_SECONDS) -
   Number(process.env.ACCESS_TOKEN_EXPIRE_SECONDS) * 0.1;
+export const TEXT_FIELD_TYPES: string[] = ["str", "SecretStr"];
+export const NODE_WIDTH = 400;
+export const NODE_HEIGHT = NODE_WIDTH * 3;
+
+export const SHORTCUT_KEYS = ["cmd", "ctrl", "alt", "shift"];

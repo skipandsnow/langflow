@@ -1,5 +1,5 @@
 /// <reference types="vite-plugin-svgr/client" />
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import BlogPost from "../../../../assets/undraw_blog_post_re_fy5x.svg?react";
 import ChatBot from "../../../../assets/undraw_chat_bot_re_e2gj.svg?react";
 import PromptChaining from "../../../../assets/undraw_cloud_docs_re_xjht.svg?react";
@@ -10,13 +10,13 @@ import APIRequest from "../../../../assets/undraw_real_time_analytics_re_yliv.sv
 import BasicPrompt from "../../../../assets/undraw_short_bio_re_fmx0.svg?react";
 import TransferFiles from "../../../../assets/undraw_transfer_files_re_a2a9.svg?react";
 
+import useAddFlow from "@/hooks/flows/use-add-flow";
 import {
   Card,
   CardContent,
   CardDescription,
   CardTitle,
 } from "../../../../components/ui/card";
-import useFlowsManagerStore from "../../../../stores/flowsManagerStore";
 import { useFolderStore } from "../../../../stores/foldersStore";
 import { UndrawCardComponentProps } from "../../../../types/components";
 import { updateIds } from "../../../../utils/reactflowUtils";
@@ -24,14 +24,12 @@ import { updateIds } from "../../../../utils/reactflowUtils";
 export default function UndrawCardComponent({
   flow,
 }: UndrawCardComponentProps): JSX.Element {
-  const addFlow = useFlowsManagerStore((state) => state.addFlow);
+  const addFlow = useAddFlow();
   const navigate = useNavigate();
-  const location = useLocation();
-  const folderId = location?.state?.folderId;
-  const setFolderUrl = useFolderStore((state) => state.setFolderUrl);
+  const { folderId } = useParams();
   const myCollectionId = useFolderStore((state) => state.myCollectionId);
 
-  const folderIdUrl = folderId || myCollectionId || "";
+  const folderIdUrl = folderId ?? myCollectionId;
 
   function selectImage() {
     switch (flow.name) {
@@ -142,8 +140,7 @@ export default function UndrawCardComponent({
     <Card
       onClick={() => {
         updateIds(flow.data!);
-        addFlow(true, flow).then((id) => {
-          setFolderUrl(folderId ?? "");
+        addFlow({ flow }).then((id) => {
           navigate(`/flow/${id}/folder/${folderIdUrl}`);
         });
       }}
