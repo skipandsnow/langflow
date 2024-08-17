@@ -39,11 +39,16 @@ RUN apt-get update \
     # deps for installing poetry
     curl \
     # deps for building python deps
-    build-essential npm \
+    build-essential cmake gcc g++ libevent-dev libssl-dev zlib1g-dev libudev1 \
     # gcc
     gcc \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# installs nvm (Node Version Manager)
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+# download and install Node.js (you may need to restart the terminal)
+RUN . ~/.bashrc && nvm install --lts
 
 # Install Poetry
 RUN --mount=type=cache,target=/root/.cache \
@@ -62,10 +67,10 @@ COPY pypi ./pypi
 RUN python -m pip install requests --user
 
 # Set this config to prevent slow internet connection timeout
-RUN npm config set maxsockets 1
+# RUN npm config set maxsockets 1
 
 # Install frontend dependencies
-RUN make install_frontendci
+RUN . ~/.bashrc && make install_frontend
 
 # # Prepare backend dependencies
 RUN poetry lock --no-update

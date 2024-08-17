@@ -53,10 +53,10 @@ class DatabaseService(Service):
             connect_args = {"check_same_thread": False}
         else:
             connect_args = {
-                "keepalives": 1,           # enable TCP keepalives
-                "keepalives_idle": 30,     # inactivity seconds
-                "keepalives_interval": 5,  # retransmission interval
-                "keepalives_count": 5      # max number of keepalives to transmit
+                # "keepalives": 1,           # enable TCP keepalives
+                # "keepalives_idle": 30,     # inactivity seconds
+                # "keepalives_interval": 5,  # retransmission interval
+                # "keepalives_count": 5      # max number of keepalives to transmit
             }
         try:
             # register the event listener for sqlite as part of this class.
