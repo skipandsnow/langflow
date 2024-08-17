@@ -7,7 +7,7 @@
 ``` shell
 git config --global http.sslVerify false
 git config --global credential.helper store
-git config --global credential.helper 'cache --timeout=600'
+git config --global credential.helper cache
 git config --global user.email "chinchao.huang@ctbcbank.com"
 git config --global user.name "z00040866"
 git config --global --add safe.directory /app/ctbc-repo/aigo-llm
