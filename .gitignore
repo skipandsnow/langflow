@@ -273,3 +273,9 @@ src/frontend/temp
 *-shm
 *-wal
 .history
+
+# har
+*.har
+
+# docker-compose
+*docker-compose.yml
