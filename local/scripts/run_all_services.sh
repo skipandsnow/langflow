@@ -1,5 +1,5 @@
 #!/bin/bash
-docker build -t langflow-builder-base:1.0.9-v5 -f docker/build_langflow_builder_base.Dockerfile .
+docker build -t langflow-builder-base:1.0.15 -f docker/build_langflow_builder_base.Dockerfile .
 
 # Run qdrant
 docker pull qdrant/qdrant:v1.10.1
@@ -16,16 +16,16 @@ docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ol
 docker run -p 1389:1389 -d --rm --name openldap \
 --env LDAP_ADMIN_USERNAME=admin \
 --env LDAP_ADMIN_PASSWORD=admin \
---env LDAP_USERS=z00040866 \
---env LDAP_PASSWORDS=z00040866 \
+--env LDAP_USERS=langflow_usr \
+--env LDAP_PASSWORDS=langflow_usr \
 --env LDAP_ROOT=dc=example,dc=org \
 --env LDAP_ADMIN_DN=cn=admin,dc=example,dc=org \
 bitnami/openldap:latest
 
 # Code Server
-docker run -it --name code-server -p 127.0.0.1:8080:8080 \
-  -v "$HOME/.config:/home/coder/.config" \
-  -v "$PWD:/home/coder/project" \
-  -u "$(id -u):$(id -g)" \
-  codercom/code-server:ubuntu-python3.12
-  code-server "--bind-addr=0.0.0.0:8080"
+# docker run -it --name code-server -p 127.0.0.1:8080:8080 \
+#   -v "$HOME/.config:/home/coder/.config" \
+#   -v "$PWD:/home/coder/project" \
+#   -u "$(id -u):$(id -g)" \
+#   codercom/code-server:ubuntu-python3.12
+#   code-server "--bind-addr=0.0.0.0:8080"
