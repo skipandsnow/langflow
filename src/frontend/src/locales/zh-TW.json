@@ -1,5 +1,6 @@
 {
   "Small Davinci": "創意發想平台(小達)",
+  "Triple Small Davinci": "小達",
   "Loading...":"載入中...",
   "Basic Components": "基本組件",
   "Advanced": "進階組件",
@@ -163,5 +164,6 @@
   "Manage Shortcuts for quick access to frequently used actions.": "管理快捷鍵以存取常用操作。",
   "Functionality": "功能",
   "Keyboard Shortcut": "鍵盤快捷鍵",
-  "Restore": "復原"
+  "Restore": "復原",
+  "AIIT":"AIIT"
 }

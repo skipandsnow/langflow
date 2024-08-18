@@ -441,7 +441,7 @@ export default function NodeToolbarComponent({
                       shortcuts.find((obj) => obj.name === "Advanced Settings")
                         ?.shortcut!
                     }
-                    value={t("Advanced Settings")}
+                    value={t("Advanced")}
                     icon={"Settings2"}
                     dataTestId="edit-button-modal"
                   />

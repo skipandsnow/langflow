@@ -180,63 +180,6 @@ export default function ExtraSidebar(): JSX.Element {
     }
   }, [getFilterEdge, data]);
 
-  const ModalMemo = useMemo(
-    () => (
-      <ShareModal
-        is_component={false}
-        component={currentFlow!}
-        disabled={!hasApiKey || !validApiKey || !hasStore}
-      >
-        <button
-          disabled={!hasApiKey || !validApiKey || !hasStore}
-          className={classNames(
-            "extra-side-bar-buttons gap-[4px] text-sm font-semibold",
-            !hasApiKey || !validApiKey || !hasStore
-              ? "button-disable cursor-default text-muted-foreground"
-              : "",
-          )}
-        >
-          <IconComponent
-            name="Share3"
-            className={classNames(
-              "-m-0.5 -ml-1 h-6 w-6",
-              !hasApiKey || !validApiKey || !hasStore
-                ? "extra-side-bar-save-disable"
-                : "",
-            )}
-          />
-          Share
-        </button>
-      </ShareModal>
-    ),
-    [hasApiKey, validApiKey, currentFlow, hasStore],
-  );
-
-  const ExportMemo = useMemo(
-    () => (
-      <ExportModal>
-        <button className={classNames("extra-side-bar-buttons")}>
-          <IconComponent name="FileDown" className="side-bar-button-size" />
-        </button>
-      </ExportModal>
-    ),
-    [],
-  );
-
-  const getIcon = useMemo(() => {
-    return (SBSectionName: string) => {
-      if (nodeIconsLucide[SBSectionName]) {
-        return (
-          <IconComponent
-            name={SBSectionName}
-            strokeWidth={1.5}
-            className="w-[22px] text-primary"
-          />
-        );
-      }
-    };
-  }, []);
-
 const {t} = useTranslation();
 
   return (

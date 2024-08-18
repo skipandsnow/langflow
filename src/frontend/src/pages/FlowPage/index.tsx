@@ -13,8 +13,11 @@ import useFlowStore from "../../stores/flowStore";
 import useFlowsManagerStore from "../../stores/flowsManagerStore";
 import Page from "./components/PageComponent";
 import ExtraSidebar from "./components/extraSidebarComponent";
+import { useTranslation } from "react-i18next";
 
 export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
+  
+  const { t } = useTranslation();
   const setCurrentFlow = useFlowsManagerStore((state) => state.setCurrentFlow);
   const currentFlow = useFlowStore((state) => state.currentFlow);
   const currentSavedFlow = useFlowsManagerStore((state) => state.currentFlow);
@@ -113,9 +116,9 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
           className="langflow-page-icon"
         >
           {FeatureFlags.ENABLE_BRANDING && version && (
-            <div className="mt-1">Langflow 🤝 DataStax</div>
+            <div className="mt-1">{t('Triple Small Davinci')} 🤝 {t('AIIT')}</div>
           )}
-          <div className={version ? "mt-2" : "mt-1"}>⛓️ v{version}</div>
+          <div className={version ? "mt-2" : "mt-1"}>v{version}</div>
         </a>
       </div>
       {blocker.state === "blocked" && currentSavedFlow && (

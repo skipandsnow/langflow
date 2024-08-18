@@ -3,7 +3,7 @@ import {
   useGetProfilePicturesQuery,
 } from "@/controllers/API/queries/files";
 import * as Form from "@radix-ui/react-form";
-import { useEffect, useState } from "react";
+import { UseQueryResult } from "@tanstack/react-query";
 import { Button } from "../../../../../../components/ui/button";
 import {
   Card,
@@ -21,7 +21,7 @@ type ProfilePictureFormComponentProps = {
   profilePicture: string;
   handleInput: (event: any) => void;
   handlePatchProfilePicture: (gradient: string) => void;
-  handleGetProfilePictures: () => undefined;
+  handleGetProfilePictures: UseQueryResult<ProfilePicturesQueryResponse>;
   userData: any;
 };
 const ProfilePictureFormComponent = ({
