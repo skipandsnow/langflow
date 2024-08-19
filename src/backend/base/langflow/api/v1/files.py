@@ -53,19 +53,18 @@ async def upload_file(
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.post("/data/upload}", status_code=HTTPStatus.CREATED)
-async def upload_data(
-    file: UploadData,
-    storage_service: StorageService = Depends(get_storage_service),
+async def upload_files(
+    files: UploadFile
 ):
     """
     Upload a file to the /app directory.
     """    
-    file_path = os.path.join("~/", file.filename)
+    file_path = os.path.join("~/", files.filename)
     try:
         async with aiofiles.open(file_path, 'wb') as out_file:
-            content = await file.read()
+            content = await files.read()
             await out_file.write(content)
-        return {"filename": file.filename, "message": "File uploaded successfully"}                
+        return {"filename": files.filename, "message": "File uploaded successfully"}                
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

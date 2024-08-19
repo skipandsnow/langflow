@@ -4,21 +4,21 @@ import { api } from "../../api";
 import { getURL } from "../../helpers/constants";
 import { UseRequestProcessor } from "../../services/request-processor";
 
-interface IDataUploadResponse {
+interface IFileUploadResponse {
   message: string;
 }
 
-interface IDataUploadOptions {
-  onSuccess?: (data: IDataUploadResponse) => void;
+interface IFileUploadOptions {
+  onSuccess?: (data: IFileUploadResponse) => void;
   onError?: (error: any) => void;
 }
 
-export const useUploadData = (
-  options?: IDataUploadOptions
-): UseMutationResult<IDataUploadResponse, any, FormData> => {
+export const useUploadFile = (
+  options?: IFileUploadOptions
+): UseMutationResult<IFileUploadResponse, any, FormData> => {
   const { mutate } = UseRequestProcessor();
 
-  const uploadDataFunction = async (formData: FormData): Promise<IDataUploadResponse> => {
+  const uploadFileFunction = async (formData: FormData): Promise<IFileUploadResponse> => {
     const res = await api.post(`${getURL("FILES")}/data/upload`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -27,10 +27,10 @@ export const useUploadData = (
     return res.data;
   };
 
-  const mutation: UseMutationResult<IDataUploadResponse, any, FormData> = mutate(
-    ["useUploadData"],
+  const mutation: UseMutationResult<IFileUploadResponse, any, FormData> = mutate(
+    ["useUploadFile"],
     async (formData: FormData) => {
-      const res = await uploadDataFunction(formData);
+      const res = await uploadFileFunction(formData);
       return res;
     },
     options
