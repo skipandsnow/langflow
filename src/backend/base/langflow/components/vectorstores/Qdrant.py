@@ -1,6 +1,6 @@
 from typing import List
 
-from langchain_community.vectorstores import Qdrant
+from langchain_qdrant import Qdrant
 from langflow.base.vectorstores.model import LCVectorStoreComponent
 from langflow.helpers.data import docs_to_data
 from langflow.io import (
@@ -86,6 +86,7 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
             "collection_name": self.collection_name,
             "content_payload_key": self.content_payload_key,
             "metadata_payload_key": self.metadata_payload_key,
+            "https": False
         }
 
         server_kwargs = {
@@ -99,6 +100,7 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
             ),  # Garantir que timeout seja um inteiro
             "path": self.path if self.path else None,
             "url": self.url if self.url else None,
+            "https": False
         }
 
         server_kwargs = {k: v for k, v in server_kwargs.items() if v is not None}
