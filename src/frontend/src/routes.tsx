@@ -41,6 +41,7 @@ const ShortcutsPage = lazy(
 const SignUp = lazy(() => import("./pages/SignUpPage"));
 const StorePage = lazy(() => import("./pages/StorePage"));
 const ViewPage = lazy(() => import("./pages/ViewPage"));
+const FileManagementPage = lazy(() => import("./pages/FileManagementPage"));
 
 const router = createBrowserRouter(
   createRoutesFromElements([
@@ -84,6 +85,14 @@ const router = createBrowserRouter(
           />
         </Route>
       </Route>
+      <Route
+        path="/file-management" 
+        element={
+          <ProtectedRoute>
+              <FileManagementPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/settings"
         element={

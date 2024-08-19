@@ -51,7 +51,23 @@ async def upload_file(
         return UploadFileResponse(flowId=flow_id_str, file_path=f"{folder}/{file_name}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
+    
+@router.post("/data/upload}", status_code=HTTPStatus.CREATED)
+async def upload_data(
+    file: UploadData,
+    storage_service: StorageService = Depends(get_storage_service),
+):
+    """
+    Upload a file to the /app directory.
+    """    
+    file_path = os.path.join("~/", file.filename)
+    try:
+        async with aiofiles.open(file_path, 'wb') as out_file:
+            content = await file.read()
+            await out_file.write(content)
+        return {"filename": file.filename, "message": "File uploaded successfully"}                
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/download/{flow_id}/{file_name}")
 async def download_file(file_name: str, flow_id: UUID, storage_service: StorageService = Depends(get_storage_service)):
