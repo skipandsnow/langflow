@@ -1,5 +1,4 @@
 import importlib
-from typing import Dict, List, Optional
 
 import pytest
 from langflow.utils.util import build_template_from_function, get_base_classes, get_default_factory
@@ -8,13 +7,13 @@ from pydantic import BaseModel
 
 # Dummy classes for testing purposes
 class Parent(BaseModel):
-    """Parent Class"""
+    """Parent Class."""
 
     parent_field: str
 
 
 class Child(Parent):
-    """Child Class"""
+    """Child Class."""
 
     child_field: int
 
@@ -22,14 +21,14 @@ class Child(Parent):
 class ExampleClass1(BaseModel):
     """Example class 1."""
 
-    def __init__(self, data: Optional[List[int]] = None):
+    def __init__(self, data: list[int] | None = None):
         self.data = data or [1, 2, 3]
 
 
 class ExampleClass2(BaseModel):
     """Example class 2."""
 
-    def __init__(self, data: Optional[Dict[str, int]] = None):
+    def __init__(self, data: dict[str, int] | None = None):
         self.data = data or {"a": 1, "b": 2, "c": 3}
 
 
@@ -86,7 +85,7 @@ def test_get_default_factory():
         return "default_value"
 
     # Add dummy_function to your_module
-    setattr(importlib.import_module(module_name), "dummy_function", dummy_function)
+    importlib.import_module(module_name).dummy_function = dummy_function
 
     default_value = get_default_factory(module_name, function_repr)
 

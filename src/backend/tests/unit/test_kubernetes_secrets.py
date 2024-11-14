@@ -1,20 +1,20 @@
-import pytest
-from unittest.mock import MagicMock
-from kubernetes.client import V1ObjectMeta, V1Secret
 from base64 import b64encode
+from unittest.mock import MagicMock
 from uuid import UUID
 
+import pytest
+from kubernetes.client import V1ObjectMeta, V1Secret
 from langflow.services.variable.kubernetes_secrets import KubernetesSecretManager, encode_user_id
 
 
 @pytest.fixture
-def mock_kube_config(mocker):
+def _mock_kube_config(mocker):
     mocker.patch("kubernetes.config.load_kube_config")
     mocker.patch("kubernetes.config.load_incluster_config")
 
 
 @pytest.fixture
-def secret_manager(mock_kube_config):
+def secret_manager(_mock_kube_config):
     return KubernetesSecretManager(namespace="test-namespace")
 
 
@@ -33,13 +33,13 @@ def test_create_secret(secret_manager, mocker):
             kind="Secret",
             metadata=V1ObjectMeta(name="test-secret"),
             type="Opaque",
-            data={"key": b64encode("value".encode()).decode()},
+            data={"key": b64encode(b"value").decode()},
         ),
     )
 
 
 def test_get_secret(secret_manager, mocker):
-    mock_secret = V1Secret(data={"key": b64encode("value".encode()).decode()})
+    mock_secret = V1Secret(data={"key": b64encode(b"value").decode()})
     mocker.patch.object(secret_manager.core_api, "read_namespaced_secret", return_value=mock_secret)
 
     secret_data = secret_manager.get_secret(name="test-secret")

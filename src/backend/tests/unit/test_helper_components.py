@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from langflow.components import helpers
 from langflow.custom.utils import build_custom_component_template
 from langflow.schema import Data
+from langflow.schema.message import Message
 
 # def test_update_data_component():
 #     # Arrange
@@ -32,7 +35,7 @@ from langflow.schema import Data
 def test_uuid_generator_component():
     # Arrange
     uuid_generator_component = helpers.IDGeneratorComponent()
-    uuid_generator_component._code = open(helpers.IDGenerator.__file__, "r").read()
+    uuid_generator_component._code = Path(helpers.id_generator.__file__).read_text(encoding="utf-8")
 
     frontend_node, _ = build_custom_component_template(uuid_generator_component)
 
@@ -40,13 +43,12 @@ def test_uuid_generator_component():
     build_config = frontend_node.get("template")
     field_name = "unique_id"
     build_config = uuid_generator_component.update_build_config(build_config, None, field_name)
-    unique_id = build_config["unique_id"]["value"]
-    result = uuid_generator_component.build(unique_id)
+    result = uuid_generator_component.generate_id()
 
     # Assert
     # UUID should be a string of length 36
-    assert isinstance(result, str)
-    assert len(result) == 36
+    assert isinstance(result, Message)
+    assert len(result.text) == 36
 
 
 def test_data_as_text_component():

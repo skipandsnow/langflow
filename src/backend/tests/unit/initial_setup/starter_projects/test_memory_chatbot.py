@@ -1,15 +1,18 @@
+import operator
 from collections import deque
+from typing import TYPE_CHECKING
 
 import pytest
-
-from langflow.components.helpers.Memory import MemoryComponent
-from langflow.components.inputs.ChatInput import ChatInput
-from langflow.components.models.OpenAIModel import OpenAIModelComponent
-from langflow.components.outputs.ChatOutput import ChatOutput
-from langflow.components.prompts.Prompt import PromptComponent
+from langflow.components.helpers import MemoryComponent
+from langflow.components.inputs import ChatInput
+from langflow.components.models import OpenAIModelComponent
+from langflow.components.outputs import ChatOutput
+from langflow.components.prompts import PromptComponent
 from langflow.graph import Graph
 from langflow.graph.graph.constants import Finish
-from langflow.graph.graph.schema import GraphDump
+
+if TYPE_CHECKING:
+    from langflow.graph.graph.schema import GraphDump
 
 
 @pytest.fixture
@@ -30,23 +33,36 @@ AI: """
     openai_component.set(
         input_value=prompt_component.build_prompt, max_tokens=100, temperature=0.1, api_key="test_api_key"
     )
-    openai_component.get_output("text_output").value = "Mock response"
+    openai_component.set_on_output(name="text_output", value="Mock response", cache=True)
 
     chat_output = ChatOutput(_id="chat_output")
     chat_output.set(input_value=openai_component.text_response)
 
     graph = Graph(chat_input, chat_output)
+    assert graph.in_degree_map == {"chat_output": 1, "prompt": 2, "openai": 1, "chat_input": 0, "chat_memory": 0}
     return graph
 
 
+@pytest.mark.usefixtures("client")
 def test_memory_chatbot(memory_chatbot_graph):
     # Now we run step by step
     expected_order = deque(["chat_input", "chat_memory", "prompt", "openai", "chat_output"])
+    assert memory_chatbot_graph.in_degree_map == {
+        "chat_output": 1,
+        "prompt": 2,
+        "openai": 1,
+        "chat_input": 0,
+        "chat_memory": 0,
+    }
+    assert memory_chatbot_graph.vertices_layers == [["prompt"], ["openai"], ["chat_output"]]
+    assert memory_chatbot_graph.first_layer == ["chat_input", "chat_memory"]
+
     for step in expected_order:
         result = memory_chatbot_graph.step()
         if isinstance(result, Finish):
             break
-        assert step == result.vertex.id
+
+        assert step == result.vertex.id, (memory_chatbot_graph.in_degree_map, memory_chatbot_graph.vertices_layers)
 
 
 def test_memory_chatbot_dump_structure(memory_chatbot_graph: Graph):
@@ -88,7 +104,7 @@ def test_memory_chatbot_dump_components_and_edges(memory_chatbot_graph: Graph):
     edges = data_dict["edges"]
 
     # sort the nodes by id
-    nodes = sorted(nodes, key=lambda x: x["id"])
+    nodes = sorted(nodes, key=operator.itemgetter("id"))
 
     # Check each node
     assert nodes[0]["data"]["type"] == "ChatInput"

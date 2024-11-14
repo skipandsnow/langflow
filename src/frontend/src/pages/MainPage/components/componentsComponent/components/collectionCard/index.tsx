@@ -1,9 +1,9 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useCustomNavigate } from "@/customization/hooks/use-custom-navigate";
+import useFlowsManagerStore from "@/stores/flowsManagerStore";
+import { useParams } from "react-router-dom";
 import CollectionCardComponent from "../../../../../../components/cardComponent";
-import IconComponent from "../../../../../../components/genericIconComponent";
-import { Button } from "../../../../../../components/ui/button";
 const CollectionCard = ({ item, type, isLoading, control }) => {
-  const navigate = useNavigate();
+  const navigate = useCustomNavigate();
   const isComponent = item.is_component ?? false;
   const editFlowButtonTestId = `edit-flow-button-${item.id}`;
 
@@ -11,8 +11,13 @@ const CollectionCard = ({ item, type, isLoading, control }) => {
 
   const editFlowLink = `/flow/${item.id}${folderId ? `/folder/${folderId}` : ""}`;
 
-  const handleClick = () => {
+  const setFlowToCanvas = useFlowsManagerStore(
+    (state) => state.setFlowToCanvas,
+  );
+
+  const handleClick = async () => {
     if (!isComponent) {
+      await setFlowToCanvas(item);
       navigate(editFlowLink);
     }
   };

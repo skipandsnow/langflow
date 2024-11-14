@@ -3,11 +3,11 @@ import useHandleOnNewValue from "@/CustomNodes/hooks/use-handle-new-value";
 import useHandleNodeClass from "@/CustomNodes/hooks/use-handle-node-class";
 import { usePostRetrieveVertexOrder } from "@/controllers/API/queries/vertex";
 import useAddFlow from "@/hooks/flows/use-add-flow";
+import CodeAreaModal from "@/modals/codeAreaModal";
 import { APIClassType } from "@/types/api";
 import _, { cloneDeep } from "lodash";
 import { useEffect, useState } from "react";
 import { useUpdateNodeInternals } from "reactflow";
-import CodeAreaComponent from "../../../../components/codeAreaComponent";
 import IconComponent from "../../../../components/genericIconComponent";
 import ShadTooltip from "../../../../components/shadTooltipComponent";
 import {
@@ -51,7 +51,6 @@ export default function NodeToolbarComponent({
   numberOfOutputHandles,
   showNode,
   name = "code",
-  setShowState,
   onCloseAdvancedModal,
   updateNode,
   isOutdated,
@@ -70,7 +69,6 @@ export default function NodeToolbarComponent({
   const hasApiKey = useStoreStore((state) => state.hasApiKey);
   const validApiKey = useStoreStore((state) => state.validApiKey);
   const shortcuts = useShortcutsStore((state) => state.shortcuts);
-  const unselectAll = useFlowStore((state) => state.unselectAll);
   const currentFlowId = useFlowsManagerStore((state) => state.currentFlowId);
   const [openModal, setOpenModal] = useState(false);
   const isGroup = data.node?.flow ? true : false;
@@ -82,8 +80,7 @@ export default function NodeToolbarComponent({
 
   function minimize() {
     if (isMinimal) {
-      setShowState((show) => !show);
-      setShowNode(data.showNode ?? true ? false : true);
+      setShowNode((data.showNode ?? true) ? false : true);
       return;
     }
     setNoticeData({
@@ -256,9 +253,6 @@ export default function NodeToolbarComponent({
         break;
       case "disabled":
         break;
-      case "unselect":
-        unselectAll();
-        break;
       case "ungroup":
         handleungroup();
         break;
@@ -315,7 +309,6 @@ export default function NodeToolbarComponent({
   };
 
   const hasCode = Object.keys(data.node!.template).includes("code");
-  const [deleteIsFocus, setDeleteIsFocus] = useState(false);
 
   return (
     <>
@@ -421,7 +414,7 @@ export default function NodeToolbarComponent({
                 </div>
               </SelectTrigger>
             </ShadTooltip>
-            <SelectContent>
+            <SelectContent className="min-w-[14rem]">
               {hasCode && (
                 <SelectItem value={"code"}>
                   <ToolbarSelectItem
@@ -578,12 +571,7 @@ export default function NodeToolbarComponent({
                   dataTestId="download-button-modal"
                 />
               </SelectItem>
-              <SelectItem
-                value={"delete"}
-                className="focus:bg-red-400/[.20]"
-                onFocus={() => setDeleteIsFocus(true)}
-                onBlur={() => setDeleteIsFocus(false)}
-              >
+              <SelectItem value={"delete"} className="focus:bg-red-400/[.20]">
                 <div className="font-red flex text-status-red">
                   <IconComponent
                     name="Trash2"
@@ -591,9 +579,7 @@ export default function NodeToolbarComponent({
                   />{" "}
                   <span className="">Delete</span>{" "}
                   <span
-                    className={`absolute right-2 top-2 flex items-center justify-center rounded-sm px-1 py-[0.2] ${
-                      deleteIsFocus ? " " : "bg-muted"
-                    }`}
+                    className={`absolute right-2 top-2 flex items-center justify-center rounded-sm px-1 py-[0.2]`}
                   >
                     <IconComponent
                       name="Delete"
@@ -613,12 +599,13 @@ export default function NodeToolbarComponent({
             size={"x-small"}
             icon={"SaveAll"}
             index={6}
-            onConfirm={(index, user) => {
+            onConfirm={() => {
               addFlow({
                 flow: flowComponent,
                 override: true,
               });
               setSuccessData({ title: `${data.id} successfully overridden!` });
+              setShowOverrideModal(false);
             }}
             onClose={() => setShowOverrideModal(false)}
             onCancel={() => {
@@ -627,6 +614,7 @@ export default function NodeToolbarComponent({
                 override: true,
               });
               setSuccessData({ title: "New component successfully saved!" });
+              setShowOverrideModal(false);
             }}
           >
             <ConfirmationModal.Content>
@@ -654,22 +642,17 @@ export default function NodeToolbarComponent({
           {hasCode && (
             <div className="hidden">
               {openModal && (
-                <CodeAreaComponent
+                <CodeAreaModal
+                  setValue={handleOnNewValue}
                   open={openModal}
                   setOpen={setOpenModal}
-                  readonly={
-                    data.node?.flow && data.node.template[name].dynamic
-                      ? true
-                      : false
-                  }
-                  dynamic={data.node?.template[name].dynamic ?? false}
+                  dynamic={true}
                   setNodeClass={handleNodeClass}
                   nodeClass={data.node}
-                  disabled={false}
                   value={data.node?.template[name].value ?? ""}
-                  onChange={handleOnNewValue}
-                  id={"code-input-node-toolbar-" + name}
-                />
+                >
+                  <></>
+                </CodeAreaModal>
               )}
             </div>
           )}

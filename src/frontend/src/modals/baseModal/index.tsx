@@ -22,7 +22,11 @@ import { modalHeaderType } from "../../types/components";
 import { cn } from "../../utils/utils";
 import { switchCaseModalSize } from "./helpers/switch-case-size";
 
-type ContentProps = { children: ReactNode; overflowHidden?: boolean };
+type ContentProps = {
+  children: ReactNode;
+  overflowHidden?: boolean;
+  className?: string;
+};
 type HeaderProps = { children: ReactNode; description: string };
 type FooterProps = { children: ReactNode };
 type TriggerProps = {
@@ -32,12 +36,17 @@ type TriggerProps = {
   className?: string;
 };
 
-const Content: React.FC<ContentProps> = ({ children, overflowHidden }) => {
+const Content: React.FC<ContentProps> = ({
+  children,
+  overflowHidden,
+  className,
+}) => {
   return (
     <div
       className={cn(
         `flex w-full flex-grow flex-col transition-all duration-300`,
         overflowHidden ? "overflow-hidden" : "overflow-visible",
+        className,
       )}
     >
       {children}
@@ -89,9 +98,16 @@ const Footer: React.FC<{
     onClick?: () => void;
   };
   close?: boolean;
-}> = ({ children, submit, close }) => {
+  centered?: boolean;
+}> = ({ children, submit, close, centered }) => {
   return (
-    <div className="flex flex-shrink-0 flex-row-reverse">
+    <div
+      className={
+        centered
+          ? "flex flex-shrink-0 justify-center"
+          : "flex flex-shrink-0 flex-row-reverse"
+      }
+    >
       {submit ? (
         <div className="flex w-full items-center justify-between">
           {children ?? <div />}
@@ -125,12 +141,14 @@ const Footer: React.FC<{
   );
 };
 interface BaseModalProps {
-  children: [
-    React.ReactElement<ContentProps>,
-    React.ReactElement<HeaderProps>,
-    React.ReactElement<TriggerProps>?,
-    React.ReactElement<FooterProps>?,
-  ];
+  children:
+    | [
+        React.ReactElement<ContentProps>,
+        React.ReactElement<HeaderProps>?,
+        React.ReactElement<TriggerProps>?,
+        React.ReactElement<FooterProps>?,
+      ]
+    | React.ReactElement<ContentProps>;
   open?: boolean;
   setOpen?: (open: boolean) => void;
   size?:
@@ -143,13 +161,15 @@ interface BaseModalProps {
     | "three-cards"
     | "large-thin"
     | "large-h-full"
+    | "templates"
     | "small-h-full"
     | "medium-h-full"
     | "md-thin"
     | "sm-thin"
     | "smaller-h-full"
-    | "medium-log";
-
+    | "medium-log"
+    | "x-large";
+  className?: string;
   disable?: boolean;
   onChangeOpenModal?: (open?: boolean) => void;
   type?: "modal" | "dialog";
@@ -157,6 +177,7 @@ interface BaseModalProps {
   onEscapeKeyDown?: (e: KeyboardEvent) => void;
 }
 function BaseModal({
+  className,
   open,
   setOpen,
   children,
@@ -189,7 +210,7 @@ function BaseModal({
 
   const modalContent = (
     <>
-      {headerChild}
+      {headerChild && headerChild}
       {ContentChild}
       {ContentFooter && ContentFooter}
     </>
@@ -199,6 +220,7 @@ function BaseModal({
     minWidth,
     height,
     "flex flex-col duration-300 overflow-hidden",
+    className,
   );
 
   //UPDATE COLORS AND STYLE CLASSSES

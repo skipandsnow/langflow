@@ -1,7 +1,18 @@
+import { DefaultEdge } from "@/CustomEdges";
+import NoteNode from "@/CustomNodes/NoteNode";
+import IconComponent from "@/components/genericIconComponent";
 import LoadingComponent from "@/components/loadingComponent";
+import ShadTooltip from "@/components/shadTooltipComponent";
+import {
+  NOTE_NODE_MIN_HEIGHT,
+  NOTE_NODE_MIN_WIDTH,
+  SHADOW_COLOR_OPTIONS,
+} from "@/constants/constants";
 import { useGetBuildsQuery } from "@/controllers/API/queries/_builds";
+import { track } from "@/customization/utils/analytics";
 import useAutoSaveFlow from "@/hooks/flows/use-autosave-flow";
 import useUploadFlow from "@/hooks/flows/use-upload-flow";
+import { getNodeRenderType, isSupportedNodeTypes } from "@/utils/utils";
 import _, { cloneDeep } from "lodash";
 import {
   KeyboardEvent,
@@ -15,10 +26,10 @@ import { useHotkeys } from "react-hotkeys-hook";
 import ReactFlow, {
   Background,
   Connection,
+  ControlButton,
   Controls,
   Edge,
   NodeDragHandler,
-  OnMove,
   OnSelectionChangeParams,
   SelectionDragHandler,
   updateEdge,
@@ -54,6 +65,11 @@ import isWrappedWithClass from "./utils/is-wrapped-with-class";
 
 const nodeTypes = {
   genericNode: GenericNode,
+  noteNode: NoteNode,
+};
+
+const edgeTypes = {
+  default: DefaultEdge,
 };
 
 export default function Page({ view }: { view?: boolean }): JSX.Element {
@@ -97,6 +113,80 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
   const [lastSelection, setLastSelection] =
     useState<OnSelectionChangeParams | null>(null);
   const currentFlowId = useFlowsManagerStore((state) => state.currentFlowId);
+
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [isHighlightingCursor, setIsHighlightingCursor] = useState(false);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        setIsHighlightingCursor(true);
+        setTimeout(() => setIsHighlightingCursor(false), 1000);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isHighlightingCursor) {
+      const cursor = document.body.style.cursor;
+      document.body.style.cursor = "none";
+      const highlightDiv = document.createElement("div");
+      highlightDiv.style.position = "fixed";
+      highlightDiv.style.width = "40px";
+      highlightDiv.style.height = "40px";
+      highlightDiv.style.borderRadius = "50%";
+      highlightDiv.style.background =
+        "radial-gradient(circle, rgba(135,206,250,0.7) 0%, rgba(135,206,250,0) 70%)";
+      highlightDiv.style.pointerEvents = "none";
+      highlightDiv.style.zIndex = "9999";
+      highlightDiv.style.filter = "blur(5px)";
+      document.body.appendChild(highlightDiv);
+
+      let scale = 1;
+      let increasing = true;
+
+      const blink = () => {
+        if (increasing) {
+          scale += 0.03;
+          if (scale >= 1.3) increasing = false;
+        } else {
+          scale -= 0.03;
+          if (scale <= 0.7) increasing = true;
+        }
+        highlightDiv.style.transform = `scale(${scale})`;
+      };
+
+      const blinkInterval = setInterval(blink, 50);
+
+      const moveHighlight = (e: MouseEvent) => {
+        highlightDiv.style.left = `${e.clientX - 20}px`;
+        highlightDiv.style.top = `${e.clientY - 20}px`;
+      };
+
+      //@ts-ignore
+      document.addEventListener("mousemove", moveHighlight);
+
+      return () => {
+        document.body.style.cursor = cursor;
+        document.body.removeChild(highlightDiv);
+        //@ts-ignore
+        document.removeEventListener("mousemove", moveHighlight);
+        clearInterval(blinkInterval);
+      };
+    }
+  }, [isHighlightingCursor]);
+
+  const zoomLevel = reactFlowInstance?.getZoom();
+  const shadowBoxWidth = NOTE_NODE_MIN_WIDTH * (zoomLevel || 1);
+  const shadowBoxHeight = NOTE_NODE_MIN_HEIGHT * (zoomLevel || 1);
+  const shadowBoxBackgroundColor =
+    SHADOW_COLOR_OPTIONS[Object.keys(SHADOW_COLOR_OPTIONS)[0]];
 
   function handleGroupNode() {
     takeSnapshot();
@@ -143,7 +233,7 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
     };
   }, [lastCopiedSelection, lastSelection, takeSnapshot, selectionMenuVisible]);
 
-  const { isFetching, refetch } = useGetBuildsQuery({});
+  const { isFetching } = useGetBuildsQuery({ flowId: currentFlowId });
 
   const showCanvas =
     Object.keys(templates).length > 0 &&
@@ -151,8 +241,6 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
     !isFetching;
 
   useEffect(() => {
-    refetch();
-    useFlowStore.setState({ autoSaveFlow });
     if (checkOldComponents({ nodes })) {
       setNoticeData({
         title:
@@ -160,6 +248,10 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
       });
     }
   }, [currentFlowId]);
+
+  useEffect(() => {
+    useFlowStore.setState({ autoSaveFlow });
+  });
 
   function handleUndo(e: KeyboardEvent) {
     if (!isWrappedWithClass(e, "noflow")) {
@@ -249,6 +341,14 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
       e.preventDefault();
       (e as unknown as Event).stopImmediatePropagation();
       takeSnapshot();
+      if (lastSelection.edges?.length) {
+        track("Component Connection Deleted");
+      }
+      if (lastSelection.nodes?.length) {
+        lastSelection.nodes.forEach((n) => {
+          track("Component Deleted", { componentType: n.data.type });
+        });
+      }
       deleteNode(lastSelection.nodes.map((node) => node.id));
       deleteEdge(lastSelection.edges.map((edge) => edge.id));
     }
@@ -285,6 +385,7 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
     (params: Connection) => {
       takeSnapshot();
       onConnect(params);
+      track("New Component Connection Added");
     },
     [takeSnapshot, onConnect],
   );
@@ -294,12 +395,6 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
     takeSnapshot();
     // 👉 you can place your event handlers here
   }, [takeSnapshot]);
-
-  const onMoveEnd: OnMove = useCallback(() => {
-    // 👇 make moving the canvas undoable
-    autoSaveFlow();
-    updateCurrentFlow({ viewport: reactFlowInstance?.getViewport() });
-  }, [takeSnapshot, autoSaveFlow, nodes, edges, reactFlowInstance]);
 
   const onNodeDragStop: NodeDragHandler = useCallback(() => {
     // 👇 make moving the canvas undoable
@@ -314,7 +409,7 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    if (event.dataTransfer.types.some((types) => types === "nodedata")) {
+    if (event.dataTransfer.types.some((types) => isSupportedNodeTypes(types))) {
       event.dataTransfer.dropEffect = "move";
     } else {
       event.dataTransfer.dropEffect = "copy";
@@ -324,19 +419,25 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
-      if (event.dataTransfer.types.some((types) => types === "nodedata")) {
+      if (event.dataTransfer.types.some((type) => isSupportedNodeTypes(type))) {
         takeSnapshot();
+
+        const datakey = event.dataTransfer.types.find((type) =>
+          isSupportedNodeTypes(type),
+        );
 
         // Extract the data from the drag event and parse it as a JSON object
         const data: { type: string; node?: APIClassType } = JSON.parse(
-          event.dataTransfer.getData("nodedata"),
+          event.dataTransfer.getData(datakey!),
         );
+
+        track("Component Added", { componentType: data.node?.display_name });
 
         const newId = getNodeId(data.type);
 
         const newNode: NodeType = {
           id: newId,
-          type: "genericNode",
+          type: getNodeRenderType(datakey!),
           position: { x: 0, y: 0 },
           data: {
             ...data,
@@ -422,9 +523,58 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
     [],
   );
 
-  const onPaneClick = useCallback(() => {
-    setFilterEdge([]);
-  }, []);
+  const onPaneClick = useCallback(
+    (event: React.MouseEvent) => {
+      setFilterEdge([]);
+      if (isAddingNote) {
+        const shadowBox = document.getElementById("shadow-box");
+        if (shadowBox) {
+          shadowBox.style.display = "none";
+        }
+        const position = reactFlowInstance?.screenToFlowPosition({
+          x: event.clientX - shadowBoxWidth / 2,
+          y: event.clientY - shadowBoxHeight / 2,
+        });
+        const data = {
+          node: {
+            description: "",
+            display_name: "",
+            documentation: "",
+            template: {},
+          },
+          type: "note",
+        };
+        const newId = getNodeId(data.type);
+
+        const newNode: NodeType = {
+          id: newId,
+          type: "noteNode",
+          position: position || { x: 0, y: 0 },
+          data: {
+            ...data,
+            id: newId,
+          },
+        };
+        setNodes((nds) => nds.concat(newNode));
+        setIsAddingNote(false);
+      }
+    },
+    [isAddingNote, setNodes, reactFlowInstance, getNodeId, setFilterEdge],
+  );
+
+  const onPaneMouseMove = useCallback(
+    (event: React.MouseEvent) => {
+      if (isAddingNote) {
+        const shadowBox = document.getElementById("shadow-box");
+        if (shadowBox) {
+          shadowBox.style.display = "block";
+          shadowBox.style.left = `${event.clientX - shadowBoxWidth / 2}px`;
+          shadowBox.style.top = `${event.clientY - shadowBoxHeight / 2}px`;
+        }
+      }
+    },
+    [isAddingNote],
+  );
 
   return (
     <div className="h-full w-full" ref={reactFlowWrapper}>
@@ -446,9 +596,10 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
             onSelectionDragStart={onSelectionDragStart}
             onSelectionEnd={onSelectionEnd}
             onSelectionStart={onSelectionStart}
+            connectionRadius={25}
+            edgeTypes={edgeTypes}
             connectionLineComponent={ConnectionLineComponent}
             onDragOver={onDragOver}
-            onMoveEnd={onMoveEnd}
             onNodeDragStop={onNodeDragStop}
             onDrop={onDrop}
             onSelectionChange={onSelectionChange}
@@ -462,10 +613,29 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
             panActivationKeyCode={""}
             proOptions={{ hideAttribution: true }}
             onPaneClick={onPaneClick}
+            onPaneMouseMove={onPaneMouseMove}
           >
             <Background className="" />
             {!view && (
-              <Controls className="fill-foreground stroke-foreground text-primary [&>button]:border-b-border [&>button]:bg-muted hover:[&>button]:bg-border"></Controls>
+              <Controls className="fill-foreground stroke-foreground text-primary [&>button]:border-b-border [&>button]:bg-muted hover:[&>button]:bg-border">
+                <ControlButton
+                  data-testid="add_note"
+                  onClick={() => {
+                    setIsAddingNote(true);
+                  }}
+                  className="postion react-flow__controls absolute -top-10"
+                >
+                  <ShadTooltip content="Add note">
+                    <div>
+                      <IconComponent
+                        name="SquarePen"
+                        aria-hidden="true"
+                        className="scale-125"
+                      />
+                    </div>
+                  </ShadTooltip>
+                </ControlButton>
+              </Controls>
             )}
             <SelectionMenu
               lastSelection={lastSelection}
@@ -476,6 +646,16 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
               }}
             />
           </ReactFlow>
+          <div
+            id="shadow-box"
+            style={{
+              position: "absolute",
+              width: `${shadowBoxWidth}px`,
+              height: `${shadowBoxHeight}px`,
+              backgroundColor: `${shadowBoxBackgroundColor}`,
+              pointerEvents: "none",
+            }}
+          ></div>
         </div>
       ) : (
         <div className="flex h-full w-full items-center justify-center">

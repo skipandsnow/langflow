@@ -2,6 +2,7 @@ import {
   BROKEN_EDGES_WARNING,
   componentsToIgnoreUpdate,
 } from "@/constants/constants";
+import { track } from "@/customization/utils/analytics";
 import { brokenEdgeMessage } from "@/utils/utils";
 import { cloneDeep, zip } from "lodash";
 import {
@@ -79,6 +80,14 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
   nodes: [],
   edges: [],
   isBuilding: false,
+  stopBuilding: () => {
+    get().buildController.abort();
+    get().updateEdgesRunningByNodes(
+      get().nodes.map((n) => n.id),
+      false,
+    );
+    set({ isBuilding: false });
+  },
   isPending: true,
   setHasIO: (hasIO) => {
     set({ hasIO });
@@ -156,7 +165,6 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
   resetFlow: (flow) => {
     const nodes = flow?.data?.nodes ?? [];
     const edges = flow?.data?.edges ?? [];
-    const viewport = flow?.data?.viewport ?? { zoom: 1, x: 0, y: 0 };
     let brokenEdges = detectBrokenEdgesEdges(nodes, edges);
     if (brokenEdges.length > 0) {
       useAlertStore.getState().setErrorData({
@@ -177,7 +185,6 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
       flowPool: {},
       currentFlow: flow,
     });
-    get().reactFlowInstance?.setViewport(viewport);
   },
   setIsBuilding: (isBuilding) => {
     set({ isBuilding });
@@ -194,16 +201,7 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
   },
   setReactFlowInstance: (newState) => {
     set({ reactFlowInstance: newState });
-    const viewport = get().currentFlow?.data?.viewport ?? {
-      zoom: 1,
-      x: 0,
-      y: 0,
-    };
-    if (viewport.x == 0 && viewport.y == 0) {
-      newState.fitView();
-    } else {
-      newState.setViewport(viewport);
-    }
+    get().reactFlowInstance?.fitView();
   },
   onNodesChange: (changes: NodeChange[]) => {
     set({
@@ -271,13 +269,32 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
     return get().nodes.find((node) => node.id === id);
   },
   deleteNode: (nodeId) => {
-    get().setNodes(
-      get().nodes.filter((node) =>
-        typeof nodeId === "string"
-          ? node.id !== nodeId
-          : !nodeId.includes(node.id),
-      ),
+    const { filteredNodes, deletedNode } = get().nodes.reduce<{
+      filteredNodes: Node[];
+      deletedNode: Node | null;
+    }>(
+      (acc, node) => {
+        const isMatch =
+          typeof nodeId === "string"
+            ? node.id === nodeId
+            : nodeId.includes(node.id);
+
+        if (isMatch) {
+          acc.deletedNode = node;
+        } else {
+          acc.filteredNodes.push(node);
+        }
+
+        return acc;
+      },
+      { filteredNodes: [], deletedNode: null },
     );
+
+    get().setNodes(filteredNodes);
+
+    if (deletedNode) {
+      track("Component Deleted", { componentType: deletedNode.data.type });
+    }
   },
   deleteEdge: (edgeId) => {
     get().setEdges(
@@ -287,6 +304,7 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
           : !edgeId.includes(edge.id),
       ),
     );
+    track("Component Connection Deleted", { edgeId });
   },
   paste: (selection, position) => {
     if (
@@ -342,7 +360,7 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
       // Create a new node object
       const newNode: NodeType = {
         id: newId,
-        type: "genericNode",
+        type: node.type,
         position: {
           x: insidePosition.x + node.position!.x - minimumX,
           y: insidePosition.y + node.position!.y - minimumY,
@@ -438,6 +456,9 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
     });
   },
   setFilterEdge: (newState) => {
+    if (newState.length === 0) {
+      set({ filterType: undefined });
+    }
     set({ getFilterEdge: newState });
   },
   getFilterEdge: [],
@@ -476,8 +497,6 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
             targetHandle: scapeJSONParse(connection.targetHandle!),
             sourceHandle: scapeJSONParse(connection.sourceHandle!),
           },
-          // style: { stroke: "#555" },
-          // className: "stroke-foreground stroke-connection",
         },
         oldEdges,
       );
@@ -503,6 +522,7 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
     files,
     silent,
     setLockChat,
+    session,
   }: {
     startNodeId?: string;
     stopNodeId?: string;
@@ -510,6 +530,7 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
     files?: string[];
     silent?: boolean;
     setLockChat?: (lock: boolean) => void;
+    session?: string;
   }) => {
     get().setIsBuilding(true);
     get().setLockChat(true);
@@ -535,6 +556,7 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
         get().updateBuildStatus(ids, BuildStatus.ERROR);
         throw new Error("Invalid components");
       }
+      get().updateEdgesRunningByNodes(nodes, true);
     }
     function handleBuildUpdate(
       vertexBuildData: VertexBuildTypeAPI,
@@ -613,6 +635,7 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
       useFlowStore.getState().updateBuildStatus([vertexBuildData.id], status);
     }
     await buildFlowVerticesWithFallback({
+      session,
       input_value,
       files,
       flowId: currentFlow!.id,
@@ -638,20 +661,37 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
             });
           }
         }
+        get().updateEdgesRunningByNodes(
+          get().nodes.map((n) => n.id),
+          false,
+        );
         get().setIsBuilding(false);
         get().setLockChat(false);
       },
       onBuildUpdate: handleBuildUpdate,
+      onBuildStopped: () => {
+        get().setIsBuilding(false);
+        setErrorData({
+          title: "Build stopped",
+        });
+        get().revertBuiltStatusFromBuilding();
+        get().setLockChat(false);
+      },
       onBuildError: (title: string, list: string[], elementList) => {
-        const idList = elementList
-          .map((element) => element.id)
-          .filter(Boolean) as string[];
-        useFlowStore.getState().updateBuildStatus(idList, BuildStatus.BUILT);
+        const idList =
+          (elementList
+            ?.map((element) => element.id)
+            .filter(Boolean) as string[]) ?? get().nodes.map((n) => n.id);
+        useFlowStore.getState().updateBuildStatus(idList, BuildStatus.ERROR);
         if (get().componentsToUpdate)
           setErrorData({
             title:
               "There are outdated components in the flow. The error could be related to them.",
           });
+        get().updateEdgesRunningByNodes(
+          get().nodes.map((n) => n.id),
+          false,
+        );
         setErrorData({ list, title });
         get().setIsBuilding(false);
         get().setLockChat(false);
@@ -661,7 +701,7 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
           // reference is the id of the vertex or the id of the parent in a group node
           .map((element) => element.reference)
           .filter(Boolean) as string[];
-        useFlowStore.getState().updateBuildStatus(idList, BuildStatus.BUILDING);
+        get().updateBuildStatus(idList, BuildStatus.BUILDING);
       },
       onValidateNodes: validateSubgraph,
       nodes: get().nodes || undefined,
@@ -678,6 +718,17 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
       edges: get().edges,
       viewport: get().reactFlowInstance?.getViewport()!,
     };
+  },
+  updateEdgesRunningByNodes: (ids: string[], running: boolean) => {
+    const edges = get().edges;
+    const newEdges = edges.map((edge) => {
+      if (ids.includes(edge.source) && ids.includes(edge.target)) {
+        edge.animated = running;
+        edge.className = running ? "running" : "";
+      }
+      return edge;
+    });
+    set({ edges: newEdges });
   },
   updateVerticesBuild: (
     vertices: {
@@ -741,22 +792,34 @@ const useFlowStore = create<FlowStoreType>((set, get) => ({
   setCurrentFlow: (flow) => {
     set({ currentFlow: flow });
   },
-  updateCurrentFlow: ({ nodes, edges, viewport }) => {
+  updateCurrentFlow: ({ nodes, edges }) => {
     set({
       currentFlow: {
         ...get().currentFlow!,
         data: {
           nodes: nodes ?? get().currentFlow?.data?.nodes ?? [],
           edges: edges ?? get().currentFlow?.data?.edges ?? [],
-          viewport: viewport ??
-            get().currentFlow?.data?.viewport ?? {
-              x: 0,
-              y: 0,
-              zoom: 1,
-            },
+          viewport: get().currentFlow?.data?.viewport ?? {
+            x: 0,
+            y: 0,
+            zoom: 1,
+          },
         },
       },
     });
+  },
+  buildController: new AbortController(),
+  setBuildController: (controller) => {
+    set({ buildController: controller });
+  },
+  handleDragging: undefined,
+  setHandleDragging: (handleDragging) => {
+    set({ handleDragging });
+  },
+
+  filterType: undefined,
+  setFilterType: (filterType) => {
+    set({ filterType });
   },
 }));
 

@@ -1,15 +1,17 @@
 import base64
+import os
 import random
 import warnings
+from collections.abc import Coroutine
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Coroutine, Optional, Union
+from typing import Annotated
 from uuid import UUID
-import os
 
 from cryptography.fernet import Fernet
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import APIKeyHeader, APIKeyQuery, OAuth2PasswordBearer
 from jose import JWTError, jwt
+from ldap3 import Connection, Server
 from loguru import logger
 from sqlmodel import Session
 from starlette.websockets import WebSocket
@@ -17,9 +19,9 @@ from starlette.websockets import WebSocket
 from langflow.services.database.models.api_key.crud import check_key
 from langflow.services.database.models.api_key.model import ApiKey
 from langflow.services.database.models.user.crud import get_user_by_id, get_user_by_username, update_user_last_login_at
-from langflow.services.database.models.user.model import User
+from langflow.services.database.models.user.model import User, UserRead
 from langflow.services.deps import get_session, get_settings_service
-from ldap3 import Server, Connection, ALL
+from langflow.services.settings.service import SettingsService
 
 oauth2_login = OAuth2PasswordBearer(tokenUrl="api/v1/login", auto_error=False)
 
@@ -28,15 +30,17 @@ API_KEY_NAME = "x-api-key"
 api_key_query = APIKeyQuery(name=API_KEY_NAME, scheme_name="API key query", auto_error=False)
 api_key_header = APIKeyHeader(name=API_KEY_NAME, scheme_name="API key header", auto_error=False)
 
+MINIMUM_KEY_LENGTH = 32
+
 
 # Source: https://github.com/mrtolkien/fastapi_simple_security/blob/master/fastapi_simple_security/security_api_key.py
 async def api_key_security(
-    query_param: str = Security(api_key_query),
-    header_param: str = Security(api_key_header),
-    db: Session = Depends(get_session),
-) -> Optional[User]:
+    query_param: Annotated[str, Security(api_key_query)],
+    header_param: Annotated[str, Security(api_key_header)],
+    db: Annotated[Session, Depends(get_session)],
+) -> UserRead | None:
     settings_service = get_settings_service()
-    result: Optional[Union[ApiKey, User]] = None
+    result: ApiKey | User | None = None
     if settings_service.auth_settings.AUTO_LOGIN:
         # Get the first user
         if not settings_service.auth_settings.SUPERUSER:
@@ -65,33 +69,34 @@ async def api_key_security(
             detail="Invalid or missing API key",
         )
     if isinstance(result, ApiKey):
-        return result.user
-    elif isinstance(result, User):
-        return result
+        return UserRead.model_validate(result.user, from_attributes=True)
+    if isinstance(result, User):
+        return UserRead.model_validate(result, from_attributes=True)
+    msg = "Invalid result type"
+    raise ValueError(msg)
 
 
 async def get_current_user(
-    token: str = Security(oauth2_login),
-    query_param: str = Security(api_key_query),
-    header_param: str = Security(api_key_header),
-    db: Session = Depends(get_session),
+    token: Annotated[str, Security(oauth2_login)],
+    query_param: Annotated[str, Security(api_key_query)],
+    header_param: Annotated[str, Security(api_key_header)],
+    db: Annotated[Session, Depends(get_session)],
 ) -> User:
     if token:
         return await get_current_user_by_jwt(token, db)
-    else:
-        user = await api_key_security(query_param, header_param, db)
-        if user:
-            return user
+    user = await api_key_security(query_param, header_param, db)
+    if user:
+        return user
 
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid or missing API key",
-        )
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Invalid or missing API key",
+    )
 
 
 async def get_current_user_by_jwt(
     token: Annotated[str, Depends(oauth2_login)],
-    db: Session = Depends(get_session),
+    db: Annotated[Session, Depends(get_session)],
 ) -> User:
     settings_service = get_settings_service()
 
@@ -112,8 +117,8 @@ async def get_current_user_by_jwt(
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             payload = jwt.decode(token, secret_key, algorithms=[settings_service.auth_settings.ALGORITHM])
-        user_id: UUID = payload.get("sub")  # type: ignore
-        token_type: str = payload.get("type")  # type: ignore
+        user_id: UUID = payload.get("sub")  # type: ignore[assignment]
+        token_type: str = payload.get("type")  # type: ignore[assignment]
         if expires := payload.get("exp", None):
             expires_datetime = datetime.fromtimestamp(expires, timezone.utc)
             if datetime.now(timezone.utc) > expires_datetime:
@@ -132,8 +137,7 @@ async def get_current_user_by_jwt(
                 headers={"WWW-Authenticate": "Bearer"},
             )
     except JWTError as e:
-        logger.error(f"JWT decoding error: {e}")
-        logger.exception(e)
+        logger.exception("JWT decoding error")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -153,17 +157,16 @@ async def get_current_user_by_jwt(
 
 async def get_current_user_for_websocket(
     websocket: WebSocket,
-    db: Session = Depends(get_session),
-    query_param: str = Security(api_key_query),
-) -> Optional[User]:
+    db: Annotated[Session, Depends(get_session)],
+    query_param: Annotated[str, Security(api_key_query)],
+) -> User | None:
     token = websocket.query_params.get("token")
     api_key = websocket.query_params.get("x-api-key")
     if token:
         return await get_current_user_by_jwt(token, db)
-    elif api_key:
+    if api_key:
         return await api_key_security(api_key, query_param, db)
-    else:
-        return None
+    return None
 
 
 def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]):
@@ -184,6 +187,7 @@ def verify_password(plain_password, hashed_password):
     settings_service = get_settings_service()
     return settings_service.auth_settings.pwd_context.verify(plain_password, hashed_password)
 
+
 def verify_password_from_ldap(username, user_password) -> bool:
     # Set username to lower case
     username = username.lower()
@@ -200,27 +204,27 @@ def verify_password_from_ldap(username, user_password) -> bool:
     try:
         # Bind as the manager
         if not conn.bind():
-            print('Error: Could not bind as manager.')
+            logger.debug("Error: Could not bind as manager.")
             return False
 
         # Search for the user's dn
-        conn.search(user_search_base, f'(uid={username})', attributes=['cn'])
+        conn.search(user_search_base, f"(uid={username})", attributes=["cn"])
         if not conn.entries:
-            print('Error: User not found.')
+            logger.debug("Error: User not found.")
             return False
         user_dn = conn.entries[0].entry_dn
 
         # Attempt to bind as the user
         user_conn = Connection(server, user_dn, user_password)
         if user_conn.bind():
-            print('Success: Password verified.')
+            logger.debug("Success: Password verified.")
             return True
-        else:
-            print('Error: Password verification failed.')
-            return False
+        logger.debug("Error: Password verification failed.")
+        return False
     finally:
         # Ensure the connection is closed
         conn.unbind()
+
 
 def get_password_hash(password):
     settings_service = get_settings_service()
@@ -244,7 +248,7 @@ def create_token(data: dict, expires_delta: timedelta):
 def create_super_user(
     username: str,
     password: str,
-    db: Session = Depends(get_session),
+    db: Session,
 ) -> User:
     super_user = get_user_by_username(db, username)
 
@@ -264,7 +268,7 @@ def create_super_user(
     return super_user
 
 
-def create_user_longterm_token(db: Session = Depends(get_session)) -> tuple[UUID, dict]:
+def create_user_longterm_token(db: Session) -> tuple[UUID, dict]:
     settings_service = get_settings_service()
 
     username = settings_service.auth_settings.SUPERUSER
@@ -304,7 +308,7 @@ def get_user_id_from_token(token: str) -> UUID:
         return UUID(int=0)
 
 
-def create_user_tokens(user_id: UUID, db: Session = Depends(get_session), update_last_login: bool = False) -> dict:
+def create_user_tokens(user_id: UUID, db: Session, *, update_last_login: bool = False) -> dict:
     settings_service = get_settings_service()
 
     access_token_expires = timedelta(seconds=settings_service.auth_settings.ACCESS_TOKEN_EXPIRE_SECONDS)
@@ -330,7 +334,7 @@ def create_user_tokens(user_id: UUID, db: Session = Depends(get_session), update
     }
 
 
-def create_refresh_token(refresh_token: str, db: Session = Depends(get_session)):
+def create_refresh_token(refresh_token: str, db: Session):
     settings_service = get_settings_service()
 
     try:
@@ -342,8 +346,8 @@ def create_refresh_token(refresh_token: str, db: Session = Depends(get_session))
                 settings_service.auth_settings.SECRET_KEY.get_secret_value(),
                 algorithms=[settings_service.auth_settings.ALGORITHM],
             )
-        user_id: UUID = payload.get("sub")  # type: ignore
-        token_type: str = payload.get("type")  # type: ignore
+        user_id: UUID = payload.get("sub")  # type: ignore[assignment]
+        token_type: str = payload.get("type")  # type: ignore[assignment]
 
         if user_id is None or token_type == "":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
@@ -356,14 +360,14 @@ def create_refresh_token(refresh_token: str, db: Session = Depends(get_session))
         return create_user_tokens(user_id, db)
 
     except JWTError as e:
-        logger.error(f"JWT decoding error: {e}")
+        logger.exception("JWT decoding error")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
         ) from e
 
 
-def authenticate_user(username: str, password: str, db: Session = Depends(get_session)) -> Optional[User]:
+def authenticate_user(username: str, password: str, db: Session) -> User | None:
     # Set username to lower case
     username = username.lower()
 
@@ -378,8 +382,8 @@ def authenticate_user(username: str, password: str, db: Session = Depends(get_se
 
     if os.getenv("LANGFLOW_LDAP_AUTH", "false") == "true":
         return user if verify_password_from_ldap(username, password) else None
-    else:
-        return user if verify_password(password, user.password) else None
+
+    return user if verify_password(password, user.password) else None
 
 
 def add_padding(s):
@@ -390,7 +394,7 @@ def add_padding(s):
 
 def ensure_valid_key(s: str) -> bytes:
     # If the key is too short, we'll use it as a seed to generate a valid key
-    if len(s) < 32:
+    if len(s) < MINIMUM_KEY_LENGTH:
         # Use the input as a seed for the random number generator
         random.seed(s)
         # Generate 32 random bytes
@@ -401,27 +405,27 @@ def ensure_valid_key(s: str) -> bytes:
     return key
 
 
-def get_fernet(settings_service=Depends(get_settings_service)):
-    SECRET_KEY: str = settings_service.auth_settings.SECRET_KEY.get_secret_value()
-    valid_key = ensure_valid_key(SECRET_KEY)
-    fernet = Fernet(valid_key)
-    return fernet
+def get_fernet(settings_service: SettingsService):
+    secret_key: str = settings_service.auth_settings.SECRET_KEY.get_secret_value()
+    valid_key = ensure_valid_key(secret_key)
+    return Fernet(valid_key)
 
 
-def encrypt_api_key(api_key: str, settings_service=Depends(get_settings_service)):
+def encrypt_api_key(api_key: str, settings_service: SettingsService):
     fernet = get_fernet(settings_service)
     # Two-way encryption
     encrypted_key = fernet.encrypt(api_key.encode())
     return encrypted_key.decode()
 
 
-def decrypt_api_key(encrypted_api_key: str, settings_service=Depends(get_settings_service)):
+def decrypt_api_key(encrypted_api_key: str, settings_service: SettingsService):
     fernet = get_fernet(settings_service)
     decrypted_key = ""
     # Two-way decryption
     if isinstance(encrypted_api_key, str):
         try:
             decrypted_key = fernet.decrypt(encrypted_api_key.encode()).decode()
-        except Exception:
+        except Exception:  # noqa: BLE001
+            logger.opt(exception=True).debug("Failed to decrypt API key")
             decrypted_key = fernet.decrypt(encrypted_api_key).decode()
     return decrypted_key

@@ -1,4 +1,5 @@
 import GenericIconComponent from "@/components/genericIconComponent";
+import { DialogClose } from "@radix-ui/react-dialog";
 import React, { useEffect, useState } from "react";
 import ShadTooltip from "../../components/shadTooltipComponent";
 import { Button } from "../../components/ui/button";
@@ -66,6 +67,16 @@ function ConfirmationModal({
     (child) => (child as React.ReactElement).type === Content,
   );
 
+  const shouldShowConfirm = confirmationText && onConfirm;
+  const shouldShowCancel = cancelText;
+  const shouldShowFooter = shouldShowConfirm || shouldShowCancel;
+
+  const handleCancel = () => {
+    setFlag(true);
+    setModalOpen(false);
+    onCancel?.();
+  };
+
   return (
     <BaseModal {...props} open={open} setOpen={setModalOpen}>
       <BaseModal.Trigger>{triggerChild}</BaseModal.Trigger>
@@ -89,34 +100,38 @@ function ConfirmationModal({
         {ContentChild}
       </BaseModal.Content>
 
-      <BaseModal.Footer>
-        <Button
-          className="ml-3"
-          variant={destructive ? "destructive" : "default"}
-          onClick={() => {
-            setFlag(true);
-            setModalOpen(false);
-            onConfirm(index, data);
-          }}
-          loading={loading}
-          data-testid="replace-button"
-        >
-          {confirmationText}
-        </Button>
-        {cancelText && onCancel && (
-          <Button
-            className=""
-            variant={destructiveCancel ? "destructive" : "outline"}
-            onClick={() => {
-              setFlag(true);
-              if (onCancel) onCancel();
-              setModalOpen(false);
-            }}
-          >
-            {cancelText}
-          </Button>
-        )}
-      </BaseModal.Footer>
+      {shouldShowFooter ? (
+        <BaseModal.Footer>
+          {shouldShowConfirm && (
+            <Button
+              className="ml-3"
+              variant={destructive ? "destructive" : "default"}
+              onClick={() => {
+                setFlag(true);
+                setModalOpen(false);
+                onConfirm(index, data);
+              }}
+              loading={loading}
+              data-testid="replace-button"
+            >
+              {confirmationText}
+            </Button>
+          )}
+          {shouldShowCancel && (
+            <DialogClose>
+              <Button
+                className=""
+                variant={destructiveCancel ? "destructive" : "outline"}
+                onClick={handleCancel}
+              >
+                {cancelText}
+              </Button>
+            </DialogClose>
+          )}
+        </BaseModal.Footer>
+      ) : (
+        <></>
+      )}
     </BaseModal>
   );
 }

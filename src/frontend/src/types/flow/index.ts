@@ -2,6 +2,14 @@ import { ReactFlowJsonObject, XYPosition } from "reactflow";
 import { BuildStatus } from "../../constants/enums";
 import { APIClassType } from "../api/index";
 
+export type PaginatedFlowsType = {
+  items: FlowType[];
+  total: number;
+  size: number;
+  page: number;
+  pages: number;
+};
+
 export type FlowType = {
   name: string;
   id: string;
@@ -17,6 +25,8 @@ export type FlowType = {
   folder?: string;
   user_id?: string;
   icon?: string;
+  gradient?: string;
+  tags?: string[];
   icon_bg_color?: string;
   folder_id?: string;
   webhook?: boolean;
@@ -30,6 +40,21 @@ export type NodeType = {
   selected?: boolean;
 };
 
+export interface noteClassType
+  extends Pick<APIClassType, "description" | "display_name" | "documentation"> {
+  template: {
+    backgroundColor: string;
+    [key: string]: any;
+  };
+}
+
+export interface noteDataType
+  extends Pick<NodeDataType, "showNode" | "type" | "id"> {
+  showNode?: boolean;
+  type: string;
+  node?: noteClassType;
+  id: string;
+}
 export type NodeDataType = {
   showNode?: boolean;
   type: string;

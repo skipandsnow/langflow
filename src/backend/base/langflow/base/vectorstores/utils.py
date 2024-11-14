@@ -2,8 +2,7 @@ from langflow.schema import Data
 
 
 def chroma_collection_to_data(collection_dict: dict):
-    """
-    Converts a collection of chroma vectors into a list of data.
+    """Converts a collection of chroma vectors into a list of data.
 
     Args:
         collection_dict (dict): A dictionary containing the collection of chroma vectors.
@@ -17,8 +16,7 @@ def chroma_collection_to_data(collection_dict: dict):
             "id": collection_dict["ids"][i],
             "text": doc,
         }
-        if "metadatas" in collection_dict:
-            for key, value in collection_dict["metadatas"][i].items():
-                data_dict[key] = value
+        if ("metadatas" in collection_dict) and collection_dict["metadatas"][i]:
+            data_dict.update(collection_dict["metadatas"][i].items())
         data.append(Data(**data_dict))
     return data

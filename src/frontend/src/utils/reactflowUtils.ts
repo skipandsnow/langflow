@@ -215,6 +215,9 @@ export function isValidConnection(
   nodes: Node[],
   edges: Edge[],
 ) {
+  if (source === target) {
+    return false;
+  }
   const targetHandleObject: targetHandleType = scapeJSONParse(targetHandle!);
   const sourceHandleObject: sourceHandleType = scapeJSONParse(sourceHandle!);
   if (
@@ -468,7 +471,11 @@ Array<{ id: string; errors: Array<string> }> {
     ];
   }
   // validateNode(n, edges) returns an array of errors for the node
-  return nodes.map((n) => ({ id: n.id, errors: validateNode(n, edges) }));
+  const nodeMap = nodes.map((n) => ({
+    id: n.id,
+    errors: validateNode(n, edges),
+  }));
+  return nodeMap.filter((n) => n.errors?.length);
 }
 
 export function updateEdges(edges: Edge[]) {
@@ -789,7 +796,10 @@ export function checkEdgeWithoutEscapedHandleIds(edges: Edge[]): boolean {
 }
 
 export function checkOldNodesOutput(nodes: NodeType[]): boolean {
-  return nodes.some((node) => !node.data.node?.outputs);
+  return nodes.some(
+    (node) =>
+      node.data.node?.outputs === undefined && node.type === "genericNode",
+  );
 }
 
 export function customStringify(obj: any): string {
@@ -1708,4 +1718,15 @@ export function checkOldComponents({ nodes }: { nodes: any[] }) {
         "(CustomComponent):",
       ),
   );
+}
+
+export function someFlowTemplateFields(
+  { nodes }: { nodes: NodeType[] },
+  validateFn: (field: InputFieldType) => boolean,
+): boolean {
+  return nodes.some((node) => {
+    return Object.keys(node.data.node?.template ?? {}).some((field) => {
+      return validateFn((node.data.node?.template ?? {})[field]);
+    });
+  });
 }

@@ -1,9 +1,11 @@
-import FeatureFlags from "@/../feature-config.json";
+import { ENABLE_API, ENABLE_NEW_IO_MODAL } from "@/customization/feature-flags";
+import { track } from "@/customization/utils/analytics";
 import { Transition } from "@headlessui/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import IOModal from "../../modals/IOModal";
 import ApiModal from "../../modals/apiModal";
+import IOModalOld from "../../modals/IOModal";
+import IOModalNew from "../../modals/IOModal/newModal";
 import ShareModal from "../../modals/shareModal";
 import useFlowStore from "../../stores/flowStore";
 import { useShortcutsStore } from "../../stores/shortcuts";
@@ -11,6 +13,7 @@ import { useStoreStore } from "../../stores/storeStore";
 import { classNames, isThereModal } from "../../utils/utils";
 import ForwardedIconComponent from "../genericIconComponent";
 import { Separator } from "../ui/separator";
+const IOModal = ENABLE_NEW_IO_MODAL ? IOModalNew : IOModalOld;
 import { useTranslation } from "react-i18next";
 
 export default function FlowToolbar(): JSX.Element {
@@ -48,6 +51,12 @@ export default function FlowToolbar(): JSX.Element {
   const validApiKey = useStoreStore((state) => state.validApiKey);
   const hasApiKey = useStoreStore((state) => state.hasApiKey);
   const currentFlow = useFlowStore((state) => state.currentFlow);
+
+  useEffect(() => {
+    if (open) {
+      track("Playground Button Clicked");
+    }
+  }, [open]);
 
   const { t } = useTranslation();
 
@@ -141,7 +150,7 @@ export default function FlowToolbar(): JSX.Element {
             <div>
               <Separator orientation="vertical" />
             </div>
-            {FeatureFlags.ENABLE_API && (
+            {ENABLE_API && (
               <>
                 <div className="flex cursor-pointer items-center gap-2">
                   {currentFlow && currentFlow.data && (

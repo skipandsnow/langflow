@@ -26,7 +26,7 @@ const config = {
     "bg-status-red",
     "bg-status-yellow",
   ],
-  important: true,
+  important: false,
   theme: {
     container: {
       center: true,
@@ -67,6 +67,7 @@ const config = {
         "dark-blue": "var(--dark-blue)",
         "dark-gray": "var(--dark-gray)",
         "dark-red": "var(--dark-red)",
+        "note-placeholder": "var(--note-placeholder)",
         error: {
           DEFAULT: "var(--error)",
           background: "var(--error-background)",
@@ -90,33 +91,43 @@ const config = {
         "medium-high-indigo": "var(--medium-high-indigo)",
         "medium-indigo": "var(--medium-indigo)",
         "medium-low-gray": "var(--medium-low-gray)",
+        "note-amber": "var(--note-amber)",
         "status-green": "var(--status-green)",
         "status-red": "var(--status-red)",
         "status-yellow": "var(--status-yellow)",
         "status-gray": "var(--status-gray)",
         "success-background": "var(--success-background)",
         "success-foreground": "var(--success-foreground)",
-        "beta-background": "var(--beta-background)",
-        "beta-foreground": "var(--beta-foreground)",
-        "beta-foreground-soft": "var(--beta-foreground-soft)",
+        filter: {
+          foreground: "var(--filter-foreground)",
+          background: "var(--filter-background)",
+        },
+        beta: {
+          background: "var(--beta-background)",
+          foreground: "var(--beta-foreground)",
+          "foreground-soft": "var(--beta-foreground-soft)",
+        },
         "chat-bot-icon": "var(--chat-bot-icon)",
         "chat-user-icon": "var(--chat-user-icon)",
+        canvas: "var(--canvas)",
         ice: "var(--ice)",
         selected: "var(--selected)",
         hover: "var(--hover)",
-        white: "var(--white)",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        "node-selected": "hsl(var(--node-selected))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          hover: "hsl(var(--primary-hover))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          hover: "hsl(var(--secondary-hover))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -130,6 +141,18 @@ const config = {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
+        "accent-emerald": {
+          DEFAULT: "hsl(var(--accent-emerald))",
+          foreground: "hsl(var(--accent-emerald-foreground))",
+        },
+        "accent-indigo": {
+          DEFAULT: "hsl(var(--accent-indigo))",
+          foreground: "hsl(var(--accent-indigo-foreground))",
+        },
+        "accent-pink": {
+          DEFAULT: "hsl(var(--accent-pink))",
+          foreground: "hsl(var(--accent-pink-foreground))",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -137,6 +160,10 @@ const config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        tooltip: {
+          DEFAULT: "hsl(var(--tooltip))",
+          foreground: "hsl(var(--tooltip-foreground))",
         },
       },
       borderRadius: {
@@ -249,6 +276,18 @@ const config = {
         ":focus-visible": {
           outline: "none  !important",
           outlineOffset: "0px !important",
+        },
+        ".note-node-markdown": {
+          lineHeight: "1",
+          "& ul li::marker": {
+            color: "black",
+          },
+          "& ol li::marker": {
+            color: "black",
+          },
+          "& h1, & h2, & h3, & h4, & h5, & h6, & p, & ul, & ol": {
+            marginBottom: "0.25rem",
+          },
         },
       });
     }),

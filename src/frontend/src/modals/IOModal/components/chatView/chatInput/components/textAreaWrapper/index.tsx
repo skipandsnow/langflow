@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Textarea } from "../../../../../../../components/ui/textarea";
 import { classNames } from "../../../../../../../utils/utils";
 import { useTranslation } from "react-i18next";
@@ -7,7 +8,6 @@ const TextAreaWrapper = ({
   send,
   lockChat,
   noInput,
-  saveLoading,
   chatValue,
   setChatValue,
   CHAT_INPUT_PLACEHOLDER,
@@ -30,28 +30,29 @@ const TextAreaWrapper = ({
     }
   };
 
-  const lockClass =
-    lockChat || saveLoading
-      ? "form-modal-lock-true bg-input"
-      : noInput
-        ? "form-modal-no-input bg-input"
-        : "form-modal-lock-false bg-background";
+  const lockClass = lockChat
+    ? "form-modal-lock-true bg-input"
+    : noInput
+      ? "form-modal-no-input bg-input"
+      : "form-modal-lock-false bg-background";
 
-  const fileClass =
-    files.length > 0
-      ? "rounded-b-lg ring-0 focus:ring-0 focus:border-2 rounded-t-none border-t-0 border-border focus:border-t-0 focus:border-ring"
-      : "rounded-md border-t border-border focus:ring-0 focus:border-2 focus:border-ring";
+  const fileClass = files.length > 0 ? "!rounded-t-none border-t-0" : "";
 
   const additionalClassNames = "form-modal-lockchat pl-14";
-
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (!lockChat && !noInput) {
+      inputRef.current?.focus();
+    }
+  }, [lockChat, noInput]);
+
 
   return (
     <Textarea
       data-testid="input-chat-playground"
       onFocus={(e) => {
         setInputFocus(true);
-        e.target.style.borderTopWidth = "0";
       }}
       onBlur={() => setInputFocus(false)}
       onKeyDown={(event) => {
@@ -61,7 +62,7 @@ const TextAreaWrapper = ({
       }}
       rows={1}
       ref={inputRef}
-      disabled={lockChat || noInput || saveLoading}
+      disabled={lockChat || noInput}
       style={{
         resize: "none",
         bottom: `${inputRef?.current?.scrollHeight}px`,
@@ -72,7 +73,7 @@ const TextAreaWrapper = ({
             : "hidden"
         }`,
       }}
-      value={lockChat ? t("Thinking...") : saveLoading ? t("Saving...") : chatValue}
+      value={lockChat ? "Thinking..." : chatValue}
       onChange={(event): void => {
         setChatValue(event.target.value);
       }}

@@ -2,12 +2,13 @@ import {
   LANGFLOW_ACCESS_TOKEN,
   LANGFLOW_API_TOKEN,
   LANGFLOW_AUTO_LOGIN_OPTION,
+  LANGFLOW_REFRESH_TOKEN,
 } from "@/constants/constants";
 import { useGetUserData } from "@/controllers/API/queries/auth";
+import { useGetGlobalVariablesMutation } from "@/controllers/API/queries/variables/use-get-mutation-global-variables";
 import useAuthStore from "@/stores/authStore";
 import { createContext, useEffect, useState } from "react";
-import Cookies from "universal-cookie";
-import useAlertStore from "../stores/alertStore";
+import { Cookies } from "react-cookie";
 import { useStoreStore } from "../stores/storeStore";
 import { Users } from "../types/api";
 import { AuthContextType } from "../types/contexts/auth";
@@ -32,7 +33,6 @@ export function AuthProvider({ children }): React.ReactElement {
     cookies.get(LANGFLOW_ACCESS_TOKEN) ?? null,
   );
   const [userData, setUserData] = useState<Users | null>(null);
-  const setLoading = useAlertStore((state) => state.setLoading);
   const [apiKey, setApiKey] = useState<string | null>(
     cookies.get(LANGFLOW_API_TOKEN),
   );
@@ -42,6 +42,7 @@ export function AuthProvider({ children }): React.ReactElement {
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
 
   const { mutate: mutateLoggedUser } = useGetUserData();
+  const { mutate: mutateGetGlobalVariables } = useGetGlobalVariablesMutation();
 
   useEffect(() => {
     const storedAccessToken = cookies.get(LANGFLOW_ACCESS_TOKEN);
@@ -70,21 +71,32 @@ export function AuthProvider({ children }): React.ReactElement {
         },
         onError: () => {
           setUserData(null);
-          setLoading(false);
         },
       },
     );
   }
 
-  function login(newAccessToken: string, autoLogin: string) {
+  function login(
+    newAccessToken: string,
+    autoLogin: string,
+    refreshToken?: string,
+  ) {
     cookies.set(LANGFLOW_AUTO_LOGIN_OPTION, autoLogin, { path: "/" });
+    if (refreshToken) {
+      cookies.set(LANGFLOW_REFRESH_TOKEN, refreshToken, { path: "/" });
+    }
     setAccessToken(newAccessToken);
     setIsAuthenticated(true);
     getUser();
+    getGlobalVariables();
   }
 
   function storeApiKey(apikey: string) {
     setApiKey(apikey);
+  }
+
+  function getGlobalVariables() {
+    mutateGetGlobalVariables({});
   }
 
   return (

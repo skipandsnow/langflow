@@ -1,5 +1,6 @@
 // src/constants/constants.ts
 
+import custom from "../customization/config-constants";
 import { languageMap } from "../types/components";
 
 /**
@@ -567,9 +568,7 @@ export const ADMIN_HEADER_TITLE = "Admin Page";
 export const ADMIN_HEADER_DESCRIPTION =
   "Navigate through this section to efficiently oversee all application users. From here, you can seamlessly manage user accounts.";
 
-export const BASE_URL_API = "/api/v1/";
-
-export const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:7860/";
+export const BASE_URL_API = custom.BASE_URL_API || "/api/v1/";
 
 export const LANGFLOW_DEFAULT_LOCALE = process.env.LANGFLOW_DEFAULT_LOCALE || 'en';
 
@@ -582,7 +581,7 @@ export const URL_EXCLUDED_FROM_ERROR_RETRIES = [
   `${BASE_URL_API}validate/code`,
   `${BASE_URL_API}custom_component`,
   `${BASE_URL_API}validate/prompt`,
-  `${BACKEND_URL}login`,
+  `${BASE_URL_API}/login`,
   `${BASE_URL_API}api_key/store`,
 ];
 
@@ -625,6 +624,10 @@ export const FETCH_ERROR_MESSAGE = "Couldn't establish a connection.";
 export const FETCH_ERROR_DESCRIPION =
   "Check if everything is working properly and try again.";
 
+export const TIMEOUT_ERROR_MESSAGE =
+  "Please wait a few moments while the server processes your request.";
+export const TIMEOUT_ERROR_DESCRIPION = "Server is busy.";
+
 export const SIGN_UP_SUCCESS = "Account created! Await admin activation. ";
 
 export const API_PAGE_PARAGRAPH =
@@ -649,6 +652,8 @@ export const LANGFLOW_SUPPORTED_TYPES = new Set([
   "dict",
   "NestedDict",
   "table",
+  "link",
+  "slider",
 ]);
 
 export const priorityFields = new Set(["code", "template"]);
@@ -701,7 +706,7 @@ export const CHAT_INPUT_PLACEHOLDER =
 export const CHAT_INPUT_PLACEHOLDER_SEND = "Send a message...";
 export const EDIT_CODE_TITLE = "Edit Code";
 export const MY_COLLECTION_DESC =
-  "Manage your personal projects. Download and upload entire collections.";
+  "Manage your projects. Download and upload entire collections.";
 export const STORE_DESC = "Explore community-shared flows and components.";
 export const STORE_TITLE = "Langflow Store";
 export const NO_API_KEY = "You don't have an API key.";
@@ -725,6 +730,13 @@ export const PRIORITY_SIDEBAR_ORDER = [
   "helpers",
   "vectorstores",
   "embeddings",
+];
+
+export const BUNDLES_SIDEBAR_FOLDER_NAMES = [
+  "notion",
+  "Notion",
+  "AssemblyAI",
+  "assemblyai",
 ];
 
 export const AUTHORIZED_DUPLICATE_REQUESTS = [
@@ -846,6 +858,11 @@ export const DEFAULT_TABLE_ALERT_MSG = `Oops! It seems there's no data to displa
 
 export const DEFAULT_TABLE_ALERT_TITLE = "No Data Available";
 
+export const NO_COLUMN_DEFINITION_ALERT_TITLE = "No Column Definitions";
+
+export const NO_COLUMN_DEFINITION_ALERT_DESCRIPTION =
+  "There are no column definitions available for this table.";
+
 export const LOCATIONS_TO_RETURN = ["/flow/", "/settings/"];
 
 export const MAX_BATCH_SIZE = 50;
@@ -881,6 +898,7 @@ export const TABS_ORDER = [
 export const LANGFLOW_ACCESS_TOKEN = "access_token_lf";
 export const LANGFLOW_API_TOKEN = "apikey_tkn_lflw";
 export const LANGFLOW_AUTO_LOGIN_OPTION = "auto_login_lf";
+export const LANGFLOW_REFRESH_TOKEN = "refresh_token_lf";
 
 export const LANGFLOW_ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 - 60 * 60 * 0.1;
 export const LANGFLOW_ACCESS_TOKEN_EXPIRE_SECONDS_ENV =
@@ -891,3 +909,44 @@ export const NODE_WIDTH = 400;
 export const NODE_HEIGHT = NODE_WIDTH * 3;
 
 export const SHORTCUT_KEYS = ["cmd", "ctrl", "alt", "shift"];
+
+export const SERVER_HEALTH_INTERVAL = 10000;
+export const REFETCH_SERVER_HEALTH_INTERVAL = 20000;
+export const DRAG_EVENTS_CUSTOM_TYPESS = {
+  genericnode: "genericNode",
+  notenode: "noteNode",
+};
+
+export const NOTE_NODE_MIN_WIDTH = 324;
+export const NOTE_NODE_MIN_HEIGHT = 324;
+export const NOTE_NODE_MAX_HEIGHT = 800;
+export const NOTE_NODE_MAX_WIDTH = 600;
+
+export const COLOR_OPTIONS = {
+  default: "var(--note-default)",
+  indigo: "var(--note-indigo)",
+  emerald: "var(--note-emerald)",
+  amber: "var(--note-amber)",
+  red: "var(--note-red)",
+};
+
+export const SHADOW_COLOR_OPTIONS = {
+  default: "var(--note-default-opacity)",
+  indigo: "var(--note-indigo-opacity)",
+  emerald: "var(--note-emerald-opacity)",
+  amber: "var(--note-amber-opacity)",
+  red: "var(--note-red-opacity)",
+};
+
+export const maxSizeFilesInBytes = 10 * 1024 * 1024; // 10MB in bytes
+export const MAX_TEXT_LENGTH = 99999;
+
+export const SEARCH_TABS = ["All", "Flows", "Components"];
+export const PAGINATION_SIZE = 10;
+export const PAGINATION_PAGE = 1;
+
+export const STORE_PAGINATION_SIZE = 12;
+export const STORE_PAGINATION_PAGE = 1;
+
+export const PAGINATION_ROWS_COUNT = [10, 20, 50, 100];
+export const STORE_PAGINATION_ROWS_COUNT = [12, 24, 48, 96];

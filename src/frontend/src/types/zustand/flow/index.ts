@@ -130,6 +130,7 @@ export type FlowStoreType = {
     files,
     silent,
     setLockChat,
+    session,
   }: {
     setLockChat?: (lock: boolean) => void;
     startNodeId?: string;
@@ -137,6 +138,7 @@ export type FlowStoreType = {
     input_value?: string;
     files?: string[];
     silent?: boolean;
+    session?: string;
   }) => Promise<void>;
   getFlow: () => { nodes: Node[]; edges: Edge[]; viewport: Viewport };
   updateVerticesBuild: (
@@ -180,4 +182,53 @@ export type FlowStoreType = {
     edges?: Edge[];
     viewport?: Viewport;
   }) => void;
+  handleDragging:
+    | {
+        source: string | undefined;
+        sourceHandle: string | undefined;
+        target: string | undefined;
+        targetHandle: string | undefined;
+        type: string;
+        color: string;
+      }
+    | undefined;
+  setHandleDragging: (
+    data:
+      | {
+          source: string | undefined;
+          sourceHandle: string | undefined;
+          target: string | undefined;
+          targetHandle: string | undefined;
+          type: string;
+          color: string;
+        }
+      | undefined,
+  ) => void;
+
+  filterType:
+    | {
+        source: string | undefined;
+        sourceHandle: string | undefined;
+        target: string | undefined;
+        targetHandle: string | undefined;
+        type: string;
+        color: string;
+      }
+    | undefined;
+  setFilterType: (
+    data:
+      | {
+          source: string | undefined;
+          sourceHandle: string | undefined;
+          target: string | undefined;
+          targetHandle: string | undefined;
+          type: string;
+          color: string;
+        }
+      | undefined,
+  ) => void;
+  updateEdgesRunningByNodes: (ids: string[], running: boolean) => void;
+  stopBuilding: () => void;
+  buildController: AbortController;
+  setBuildController: (controller: AbortController) => void;
 };

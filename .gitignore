@@ -9,6 +9,7 @@ yarn-error.log*
 lerna-debug.log*
 qdrant_storage
 
+.dspy_cache
 # Mac
 .DS_Store
 
@@ -274,8 +275,5 @@ src/frontend/temp
 *-wal
 .history
 
-# har
-*.har
-
-# docker-compose
-*docker-compose.yml
+.dspy_cache/
+cache.db

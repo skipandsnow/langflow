@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_serializer
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_serializer
 
 from langflow.graph.schema import RunOutputs
+from langflow.graph.utils import serialize_field
 from langflow.schema import dotdict
 from langflow.schema.graph import Tweaks
 from langflow.schema.schema import InputType, OutputType, OutputValue
@@ -14,7 +15,9 @@ from langflow.services.database.models.api_key.model import ApiKeyRead
 from langflow.services.database.models.base import orjson_dumps
 from langflow.services.database.models.flow import FlowCreate, FlowRead
 from langflow.services.database.models.user import UserRead
+from langflow.services.settings.feature_flags import FeatureFlags
 from langflow.services.tracing.schema import Log
+from langflow.utils.util_strings import truncate_long_strings
 
 
 class BuildStatus(Enum):
@@ -27,7 +30,7 @@ class BuildStatus(Enum):
 
 
 class TweaksRequest(BaseModel):
-    tweaks: Optional[Dict[str, Dict[str, Any]]] = Field(default_factory=dict)
+    tweaks: dict[str, dict[str, Any]] | None = Field(default_factory=dict)
 
 
 class UpdateTemplateRequest(BaseModel):
@@ -37,25 +40,25 @@ class UpdateTemplateRequest(BaseModel):
 class TaskResponse(BaseModel):
     """Task response schema."""
 
-    id: Optional[str] = Field(None)
-    href: Optional[str] = Field(None)
+    id: str | None = Field(None)
+    href: str | None = Field(None)
 
 
 class ProcessResponse(BaseModel):
     """Process response schema."""
 
     result: Any
-    status: Optional[str] = None
-    task: Optional[TaskResponse] = None
-    session_id: Optional[str] = None
-    backend: Optional[str] = None
+    status: str | None = None
+    task: TaskResponse | None = None
+    session_id: str | None = None
+    backend: str | None = None
 
 
 class RunResponse(BaseModel):
     """Run response schema."""
 
-    outputs: Optional[List[RunOutputs]] = []
-    session_id: Optional[str] = None
+    outputs: list[RunOutputs] | None = []
+    session_id: str | None = None
 
     @model_serializer(mode="plain")
     def serialize(self):
@@ -75,23 +78,23 @@ class RunResponse(BaseModel):
 class PreloadResponse(BaseModel):
     """Preload response schema."""
 
-    session_id: Optional[str] = None
-    is_clear: Optional[bool] = None
+    session_id: str | None = None
+    is_clear: bool | None = None
 
 
 class TaskStatusResponse(BaseModel):
     """Task status response schema."""
 
     status: str
-    result: Optional[Any] = None
+    result: Any | None = None
 
 
 class ChatMessage(BaseModel):
     """Chat message schema."""
 
     is_bot: bool = False
-    message: Union[str, None, dict] = None
-    chatKey: Optional[str] = None
+    message: str | None | dict = None
+    chat_key: str | None = Field(None, serialization_alias="chatKey")
     type: str = "human"
 
 
@@ -107,8 +110,9 @@ class ChatResponse(ChatMessage):
     @field_validator("type")
     @classmethod
     def validate_message_type(cls, v):
-        if v not in ["start", "stream", "end", "error", "info", "file"]:
-            raise ValueError("type must be start, stream, end, error, info, or file")
+        if v not in {"start", "stream", "end", "error", "info", "file"}:
+            msg = "type must be start, stream, end, error, info, or file"
+            raise ValueError(msg)
         return v
 
 
@@ -131,31 +135,32 @@ class FileResponse(ChatMessage):
     @field_validator("data_type")
     @classmethod
     def validate_data_type(cls, v):
-        if v not in ["image", "csv"]:
-            raise ValueError("data_type must be image or csv")
+        if v not in {"image", "csv"}:
+            msg = "data_type must be image or csv"
+            raise ValueError(msg)
         return v
 
 
 class FlowListCreate(BaseModel):
-    flows: List[FlowCreate]
+    flows: list[FlowCreate]
 
 
 class FlowListIds(BaseModel):
-    flow_ids: List[str]
+    flow_ids: list[str]
 
 
 class FlowListRead(BaseModel):
-    flows: List[FlowRead]
+    flows: list[FlowRead]
 
 
 class FlowListReadWithFolderName(BaseModel):
-    flows: List[FlowRead]
+    flows: list[FlowRead]
     name: str
     description: str
 
 
 class InitResponse(BaseModel):
-    flowId: str
+    flow_id: str = Field(serialization_alias="flowId")
 
 
 class BuiltResponse(BaseModel):
@@ -165,7 +170,7 @@ class BuiltResponse(BaseModel):
 class UploadFileResponse(BaseModel):
     """Upload file response schema."""
 
-    flowId: str
+    flow_id: str = Field(serialization_alias="flowId")
     file_path: Path
 
 
@@ -180,7 +185,7 @@ class StreamData(BaseModel):
 class CustomComponentRequest(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     code: str
-    frontend_node: Optional[dict] = None
+    frontend_node: dict | None = None
 
 
 class CustomComponentResponse(BaseModel):
@@ -190,7 +195,7 @@ class CustomComponentResponse(BaseModel):
 
 class UpdateCustomComponentRequest(CustomComponentRequest):
     field: str
-    field_value: Optional[Union[str, int, float, bool, dict, list]] = None
+    field_value: str | int | float | bool | dict | list | None = None
     template: dict
 
     def get_template(self):
@@ -203,16 +208,16 @@ class CustomComponentResponseError(BaseModel):
 
 
 class ComponentListCreate(BaseModel):
-    flows: List[FlowCreate]
+    flows: list[FlowCreate]
 
 
 class ComponentListRead(BaseModel):
-    flows: List[FlowRead]
+    flows: list[FlowRead]
 
 
 class UsersResponse(BaseModel):
     total_count: int
-    users: List[UserRead]
+    users: list[UserRead]
 
 
 class ApiKeyResponse(BaseModel):
@@ -226,7 +231,7 @@ class ApiKeyResponse(BaseModel):
 class ApiKeysResponse(BaseModel):
     total_count: int
     user_id: UUID
-    api_keys: List[ApiKeyRead]
+    api_keys: list[ApiKeyRead]
 
 
 class CreateApiKeyRequest(BaseModel):
@@ -244,46 +249,60 @@ class ApiKeyCreateRequest(BaseModel):
 
 
 class VerticesOrderResponse(BaseModel):
-    ids: List[str]
+    ids: list[str]
     run_id: UUID
-    vertices_to_run: List[str]
+    vertices_to_run: list[str]
 
 
 class ResultDataResponse(BaseModel):
-    results: Optional[Any] = Field(default_factory=dict)
+    results: Any | None = Field(default_factory=dict)
     outputs: dict[str, OutputValue] = Field(default_factory=dict)
     logs: dict[str, list[Log]] = Field(default_factory=dict)
-    message: Optional[Any] = Field(default_factory=dict)
-    artifacts: Optional[Any] = Field(default_factory=dict)
-    timedelta: Optional[float] = None
-    duration: Optional[str] = None
-    used_frozen_result: Optional[bool] = False
+    message: Any | None = Field(default_factory=dict)
+    artifacts: Any | None = Field(default_factory=dict)
+    timedelta: float | None = None
+    duration: str | None = None
+    used_frozen_result: bool | None = False
+
+    @field_serializer("results")
+    @classmethod
+    def serialize_results(cls, v):
+        if isinstance(v, dict):
+            return {key: serialize_field(val) for key, val in v.items()}
+        return serialize_field(v)
 
 
 class VertexBuildResponse(BaseModel):
-    id: Optional[str] = None
-    inactivated_vertices: Optional[List[str]] = None
-    next_vertices_ids: Optional[List[str]] = None
-    top_level_vertices: Optional[List[str]] = None
+    id: str | None = None
+    inactivated_vertices: list[str] | None = None
+    next_vertices_ids: list[str] | None = None
+    top_level_vertices: list[str] | None = None
     valid: bool
-    params: Optional[Any] = Field(default_factory=dict)
+    params: Any | None = Field(default_factory=dict)
     """JSON string of the params."""
     data: ResultDataResponse
     """Mapping of vertex ids to result dict containing the param name and result value."""
-    timestamp: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime | None = Field(default_factory=lambda: datetime.now(timezone.utc))
     """Timestamp of the build."""
+
+    @field_serializer("data")
+    def serialize_data(self, data: ResultDataResponse) -> dict:
+        data_dict = data.model_dump() if isinstance(data, BaseModel) else data
+        return truncate_long_strings(data_dict)
 
 
 class VerticesBuiltResponse(BaseModel):
-    vertices: List[VertexBuildResponse]
+    vertices: list[VertexBuildResponse]
 
 
 class InputValueRequest(BaseModel):
-    components: Optional[List[str]] = []
-    input_value: Optional[str] = None
-    type: Optional[InputType] = Field(
+    components: list[str] | None = []
+    input_value: str | None = None
+    session: str | None = None
+    type: InputType | None = Field(
         "any",
-        description="Defines on which components the input value should be applied. 'any' applies to all input components.",
+        description="Defines on which components the input value should be applied. "
+        "'any' applies to all input components.",
     )
 
     # add an example
@@ -293,9 +312,12 @@ class InputValueRequest(BaseModel):
                 {
                     "components": ["components_id", "Component Name"],
                     "input_value": "input_value",
+                    "session": "session_id",
                 },
                 {"components": ["Component Name"], "input_value": "input_value"},
                 {"input_value": "input_value"},
+                {"components": ["Component Name"], "input_value": "input_value", "session": "session_id"},
+                {"input_value": "input_value", "session": "session_id"},
                 {"type": "chat", "input_value": "input_value"},
                 {"type": "json", "input_value": '{"key": "value"}'},
             ]
@@ -305,15 +327,15 @@ class InputValueRequest(BaseModel):
 
 
 class SimplifiedAPIRequest(BaseModel):
-    input_value: Optional[str] = Field(default=None, description="The input value")
-    input_type: Optional[InputType] = Field(default="chat", description="The input type")
-    output_type: Optional[OutputType] = Field(default="chat", description="The output type")
-    output_component: Optional[str] = Field(
+    input_value: str | None = Field(default=None, description="The input value")
+    input_type: InputType | None = Field(default="chat", description="The input type")
+    output_type: OutputType | None = Field(default="chat", description="The output type")
+    output_component: str | None = Field(
         default="",
         description="If there are multiple output components, you can specify the component to get the output from.",
     )
-    tweaks: Optional[Tweaks] = Field(default=None, description="The tweaks")
-    session_id: Optional[str] = Field(default=None, description="The session id")
+    tweaks: Tweaks | None = Field(default=None, description="The tweaks")
+    session_id: str | None = Field(default=None, description="The session id")
 
 
 # (alias) type ReactFlowJsonObject<NodeData = any, EdgeData = any> = {
@@ -323,11 +345,26 @@ class SimplifiedAPIRequest(BaseModel):
 # }
 # import ReactFlowJsonObject
 class FlowDataRequest(BaseModel):
-    nodes: List[dict]
-    edges: List[dict]
-    viewport: Optional[dict] = None
+    nodes: list[dict]
+    edges: list[dict]
+    viewport: dict | None = None
 
 
 class ConfigResponse(BaseModel):
+    feature_flags: FeatureFlags
     frontend_timeout: int
     auto_saving: bool
+    auto_saving_interval: int
+    health_check_max_retries: int
+    max_file_size_upload: int
+
+
+class SidebarCategory(BaseModel):
+    display_name: str
+    name: str
+    icon: str
+    beta: bool = False
+
+
+class SidebarCategoriesResponse(BaseModel):
+    categories: list[SidebarCategory]

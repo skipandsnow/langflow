@@ -1,4 +1,4 @@
-import FeatureFlags from "@/../feature-config.json";
+import { ENABLE_PROFILE_ICONS } from "@/customization/feature-flags";
 import useAuthStore from "@/stores/authStore";
 import { useStoreStore } from "@/stores/storeStore";
 import { Outlet } from "react-router-dom";
@@ -13,8 +13,7 @@ export default function SettingsPage(): JSX.Element {
   const hasStore = useStoreStore((state) => state.hasStore);
 
   // Hides the General settings if there is nothing to show
-  const showGeneralSettings =
-    FeatureFlags.ENABLE_PROFILE_ICONS || hasStore || !autoLogin;
+  const showGeneralSettings = ENABLE_PROFILE_ICONS || hasStore || !autoLogin;
 
   const sidebarNavItems: {
     href?: string;
@@ -79,6 +78,7 @@ export default function SettingsPage(): JSX.Element {
   );
   return (
     <PageLayout
+      backTo={"/"}
       title={t("Settings")}
       description={t("Manage the general settings for Langflow.")}
     >

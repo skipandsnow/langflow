@@ -1,38 +1,32 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 
 class ClassCodeDetails(BaseModel):
-    """
-    A dataclass for storing details about a class.
-    """
+    """A dataclass for storing details about a class."""
 
     name: str
-    doc: Optional[str] = None
+    doc: str | None = None
     bases: list
     attributes: list
     methods: list
-    init: Optional[dict] = Field(default_factory=dict)
+    init: dict | None = Field(default_factory=dict)
 
 
 class CallableCodeDetails(BaseModel):
-    """
-    A dataclass for storing details about a callable.
-    """
+    """A dataclass for storing details about a callable."""
 
     name: str
-    doc: Optional[str] = None
+    doc: str | None = None
     args: list
     body: list
-    return_type: Optional[Any] = None
+    return_type: Any | None = None
     has_return: bool = False
 
 
 class MissingDefault:
-    """
-    A class to represent a missing default value.
-    """
+    """A class to represent a missing default value."""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "MISSING"

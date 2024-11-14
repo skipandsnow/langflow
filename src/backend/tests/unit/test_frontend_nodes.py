@@ -1,5 +1,4 @@
 import pytest
-
 from langflow.template.field.base import Input
 from langflow.template.frontend_node.base import FrontendNode
 from langflow.template.template.base import Template
@@ -35,11 +34,11 @@ def test_template_field_defaults(sample_template_field: Input):
     assert sample_template_field.value is None
     assert sample_template_field.file_types == []
     assert sample_template_field.file_path == ""
-    assert sample_template_field.password is False
     assert sample_template_field.name == "test_field"
+    assert sample_template_field.password is None
 
 
-def test_template_to_dict(sample_template: Template, sample_template_field: Input):
+def test_template_to_dict(sample_template: Template):
     template_dict = sample_template.to_dict()
     assert template_dict["_type"] == "test_template"
     assert len(template_dict) == 2  # _type and test_field

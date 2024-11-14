@@ -1,8 +1,7 @@
 import { useLoginUser } from "@/controllers/API/queries/auth";
-import { useFolderStore } from "@/stores/foldersStore";
+import { CustomLink } from "@/customization/components/custom-link";
 import * as Form from "@radix-ui/react-form";
 import { useContext, useState } from "react";
-import { Link } from "react-router-dom";
 import InputComponent from "../../components/inputComponent";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -26,7 +25,6 @@ export default function LoginPage(): JSX.Element {
   const { password, username } = inputState;
   const { login } = useContext(AuthContext);
   const setErrorData = useAlertStore((state) => state.setErrorData);
-  const setSelectedFolder = useFolderStore((state) => state.setSelectedFolder);
 
   function handleInput({
     target: { name, value },
@@ -44,9 +42,7 @@ export default function LoginPage(): JSX.Element {
 
     mutate(user, {
       onSuccess: (data) => {
-        setSelectedFolder(null);
-
-        login(data.access_token, "login");
+        login(data.access_token, "login", data.refresh_token);
       },
       onError: (error) => {
         setErrorData({
@@ -131,11 +127,11 @@ export default function LoginPage(): JSX.Element {
             </Form.Submit>
           </div>
           <div className="w-full">
-            <Link to="/signup">
+            <CustomLink to="/signup">
               <Button className="w-full" variant="primary" type="button">
                 {t("Don't have an account")}?&nbsp;<b>{t("Sign Up")}</b>
               </Button>
-            </Link>
+            </CustomLink>
           </div>
         </div>
       </div>

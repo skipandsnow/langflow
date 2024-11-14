@@ -1,13 +1,15 @@
-import FeatureFlags from "@/../feature-config.json";
-import { useGetGlobalVariables } from "@/controllers/API/queries/variables";
+import { useGetFlow } from "@/controllers/API/queries/flows/use-get-flow";
+import { useGetRefreshFlows } from "@/controllers/API/queries/flows/use-get-refresh-flows";
+import { ENABLE_BRANDING } from "@/customization/feature-flags";
+import { useCustomNavigate } from "@/customization/hooks/use-custom-navigate";
 import useSaveFlow from "@/hooks/flows/use-save-flow";
 import { SaveChangesModal } from "@/modals/saveChangesModal";
+import useAlertStore from "@/stores/alertStore";
 import { useTypesStore } from "@/stores/typesStore";
 import { customStringify } from "@/utils/reactflowUtils";
 import { useEffect } from "react";
-import { useBlocker, useNavigate, useParams } from "react-router-dom";
+import { useBlocker, useParams } from "react-router-dom";
 import FlowToolbar from "../../components/chatComponent";
-import Header from "../../components/headerComponent";
 import { useDarkStore } from "../../stores/darkStore";
 import useFlowStore from "../../stores/flowStore";
 import useFlowsManagerStore from "../../stores/flowsManagerStore";
@@ -16,41 +18,78 @@ import ExtraSidebar from "./components/extraSidebarComponent";
 import { useTranslation } from "react-i18next";
 
 export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
-  
+
   const { t } = useTranslation();
   const setCurrentFlow = useFlowsManagerStore((state) => state.setCurrentFlow);
   const currentFlow = useFlowStore((state) => state.currentFlow);
   const currentSavedFlow = useFlowsManagerStore((state) => state.currentFlow);
+  const setSuccessData = useAlertStore((state) => state.setSuccessData);
 
   const changesNotSaved =
     customStringify(currentFlow) !== customStringify(currentSavedFlow) &&
     (currentFlow?.data?.nodes?.length ?? 0) > 0;
 
-  const blocker = useBlocker(changesNotSaved);
+  const isBuilding = useFlowStore((state) => state.isBuilding);
+  const blocker = useBlocker(changesNotSaved || isBuilding);
+
   const version = useDarkStore((state) => state.version);
   const setOnFlowPage = useFlowStore((state) => state.setOnFlowPage);
   const { id } = useParams();
-  const navigate = useNavigate();
-  useGetGlobalVariables();
+  const navigate = useCustomNavigate();
   const saveFlow = useSaveFlow();
 
   const flows = useFlowsManagerStore((state) => state.flows);
   const currentFlowId = useFlowsManagerStore((state) => state.currentFlowId);
-  const refreshFlows = useFlowsManagerStore((state) => state.refreshFlows);
+
+  const flowToCanvas = useFlowsManagerStore((state) => state.flowToCanvas);
+
+  const { mutateAsync: refreshFlows } = useGetRefreshFlows();
   const setIsLoading = useFlowsManagerStore((state) => state.setIsLoading);
   const getTypes = useTypesStore((state) => state.getTypes);
+  const types = useTypesStore((state) => state.types);
 
   const updatedAt = currentSavedFlow?.updated_at;
-
   const autoSaving = useFlowsManagerStore((state) => state.autoSaving);
+  const stopBuilding = useFlowStore((state) => state.stopBuilding);
+
+  const { mutateAsync: getFlow } = useGetFlow();
 
   const handleSave = () => {
-    saveFlow().then(() => (blocker.proceed ? blocker.proceed() : null));
+    let saving = true;
+    let proceed = false;
+    setTimeout(() => {
+      saving = false;
+      if (proceed) {
+        blocker.proceed && blocker.proceed();
+        setSuccessData({
+          title: "Flow saved successfully!",
+        });
+      }
+    }, 1200);
+    saveFlow().then(() => {
+      if (!autoSaving || saving === false) {
+        blocker.proceed && blocker.proceed();
+        setSuccessData({
+          title: "Flow saved successfully!",
+        });
+      }
+      proceed = true;
+    });
+  };
+
+  const handleExit = () => {
+    if (isBuilding) {
+      // Do nothing, let the blocker handle it
+    } else if (changesNotSaved) {
+      if (blocker.proceed) blocker.proceed();
+    } else {
+      navigate("/all");
+    }
   };
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (changesNotSaved) {
+      if (changesNotSaved || isBuilding) {
         event.preventDefault();
         event.returnValue = ""; // Required for Chrome
       }
@@ -61,7 +100,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [changesNotSaved, navigate]);
+  }, [changesNotSaved, isBuilding]);
 
   // Set flow tab id
   useEffect(() => {
@@ -74,16 +113,20 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
           return;
         }
 
-        setCurrentFlow(isAnExistingFlow);
+        const isAnExistingFlowId = isAnExistingFlow.id;
+
+        flowToCanvas
+          ? setCurrentFlow(flowToCanvas)
+          : getFlowToAddToCanvas(isAnExistingFlowId);
       } else if (!flows) {
         setIsLoading(true);
-        await refreshFlows();
-        await getTypes();
+        await refreshFlows({ get_all: true, header_flows: true });
+        if (!types || Object.keys(types).length === 0) await getTypes();
         setIsLoading(false);
       }
     };
     awaitgetTypes();
-  }, [id, flows]);
+  }, [id, flows, currentFlowId, flowToCanvas]);
 
   useEffect(() => {
     setOnFlowPage(true);
@@ -94,9 +137,34 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (
+      blocker.state === "blocked" &&
+      autoSaving &&
+      changesNotSaved &&
+      !isBuilding
+    ) {
+      handleSave();
+    }
+  }, [blocker.state, isBuilding]);
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      if (isBuilding) {
+        stopBuilding();
+      } else if (!changesNotSaved) {
+        blocker.proceed && blocker.proceed();
+      }
+    }
+  }, [blocker.state, isBuilding]);
+
+  const getFlowToAddToCanvas = async (id: string) => {
+    const flow = await getFlow({ id: id });
+    setCurrentFlow(flow);
+  };
+
   return (
     <>
-      <Header />
       <div className="flow-page-positioning">
         {currentFlow && (
           <div className="flex h-full overflow-hidden">
@@ -110,37 +178,41 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
             </main>
           </div>
         )}
-        <a
-          target={"_blank"}
-          href="https://medium.com/logspace/langflow-datastax-better-together-1b7462cebc4d"
-          className="langflow-page-icon"
-        >
-          {FeatureFlags.ENABLE_BRANDING && version && (
-            <div className="mt-1">{t('Triple Small Davinci')} 🤝 {t('AIIT')}</div>
-          )}
-          <div className={version ? "mt-2" : "mt-1"}>v{version}</div>
-        </a>
+        {ENABLE_BRANDING && version && (
+          <a
+            target={"_blank"}
+            href="https://medium.com/logspace/langflow-datastax-better-together-1b7462cebc4d"
+            className="langflow-page-icon"
+          >
+            <div className="mt-1">{t('Langflow')} 🤝 {t('AIIT')}</div>
+
+            <div className={version ? "mt-2" : "mt-1"}>v{version}</div>
+          </a>
+        )}
       </div>
-      {blocker.state === "blocked" && currentSavedFlow && (
-        <SaveChangesModal
-          onSave={handleSave}
-          onCancel={() => (blocker.reset ? blocker.reset() : null)}
-          onProceed={() => (blocker.proceed ? blocker.proceed() : null)}
-          flowName={currentSavedFlow.name}
-          unsavedChanges={changesNotSaved}
-          lastSaved={
-            updatedAt
-              ? new Date(updatedAt).toLocaleString("en-US", {
-                  hour: "numeric",
-                  minute: "numeric",
-                  second: "numeric",
-                  month: "numeric",
-                  day: "numeric",
-                })
-              : undefined
-          }
-          autoSave={autoSaving}
-        />
+      {blocker.state === "blocked" && (
+        <>
+          {!isBuilding && currentSavedFlow && (
+            <SaveChangesModal
+              onSave={handleSave}
+              onCancel={() => blocker.reset?.()}
+              onProceed={handleExit}
+              flowName={currentSavedFlow.name}
+              lastSaved={
+                updatedAt
+                  ? new Date(updatedAt).toLocaleString("en-US", {
+                      hour: "numeric",
+                      minute: "numeric",
+                      second: "numeric",
+                      month: "numeric",
+                      day: "numeric",
+                    })
+                  : undefined
+              }
+              autoSave={autoSaving}
+            />
+          )}
+        </>
       )}
     </>
   );

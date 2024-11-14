@@ -1,3 +1,5 @@
+import { GetCodeType } from "@/types/tweaks";
+
 /**
  * Function to get the python code for the API
  * @param {string} flowId - The id of the flow
@@ -6,12 +8,12 @@
  * @param {string} [endpointName] - The optional endpoint name
  * @returns {string} - The python code
  */
-export default function getPythonApiCode(
-  flowId: string,
-  isAuth: boolean,
-  tweaksBuildedObject?: {},
-  endpointName?: string | null,
-): string {
+export default function getPythonApiCode({
+  flowId,
+  tweaksBuildedObject,
+  endpointName,
+  activeTweaks,
+}: GetCodeType): string {
   let tweaksString = "{}";
   if (tweaksBuildedObject)
     tweaksString = JSON.stringify(tweaksBuildedObject, null, 2)
@@ -60,7 +62,7 @@ def run_flow(message: str,
     api_url = f"{BASE_API_URL}/api/v1/run/{endpoint}"
 
     payload = {
-        "input_value": message,
+        ${!activeTweaks ? `"input_value": message,` : ""}
         "output_type": output_type,
         "input_type": input_type,
     }

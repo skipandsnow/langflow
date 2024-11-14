@@ -1,5 +1,5 @@
 /// <reference types="vite-plugin-svgr/client" />
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import BlogPost from "../../../../assets/undraw_blog_post_re_fy5x.svg?react";
 import ChatBot from "../../../../assets/undraw_chat_bot_re_e2gj.svg?react";
 import PromptChaining from "../../../../assets/undraw_cloud_docs_re_xjht.svg?react";
@@ -10,7 +10,6 @@ import APIRequest from "../../../../assets/undraw_real_time_analytics_re_yliv.sv
 import BasicPrompt from "../../../../assets/undraw_short_bio_re_fmx0.svg?react";
 import TransferFiles from "../../../../assets/undraw_transfer_files_re_a2a9.svg?react";
 
-import useAddFlow from "@/hooks/flows/use-add-flow";
 import {
   Card,
   CardContent,
@@ -20,16 +19,16 @@ import {
 import { useFolderStore } from "../../../../stores/foldersStore";
 import { UndrawCardComponentProps } from "../../../../types/components";
 import { updateIds } from "../../../../utils/reactflowUtils";
+import { useFlowCardClick } from "../hooks/use-redirect-flow-card-click";
 
 export default function UndrawCardComponent({
   flow,
 }: UndrawCardComponentProps): JSX.Element {
-  const addFlow = useAddFlow();
-  const navigate = useNavigate();
   const { folderId } = useParams();
   const myCollectionId = useFolderStore((state) => state.myCollectionId);
-
   const folderIdUrl = folderId ?? myCollectionId;
+
+  const handleFlowCardClick = useFlowCardClick();
 
   function selectImage() {
     switch (flow.name) {
@@ -93,7 +92,7 @@ export default function UndrawCardComponent({
             preserveAspectRatio="xMidYMid meet"
           />
         );
-      case "Sequential Tasks Agent":
+      case "Simple Agent":
         return (
           <SequentialTasks
             style={{
@@ -103,7 +102,7 @@ export default function UndrawCardComponent({
             preserveAspectRatio="xMidYMid meet"
           />
         );
-      case "Hierarchical Tasks Agent":
+      case "Travel Planning Agents":
         return (
           <HierarchicalTasks
             style={{
@@ -113,7 +112,7 @@ export default function UndrawCardComponent({
             preserveAspectRatio="xMidYMid meet"
           />
         );
-      case "Complex Agent":
+      case "Dynamic Agent":
         return (
           <ComplexAgent
             style={{
@@ -138,12 +137,7 @@ export default function UndrawCardComponent({
 
   return (
     <Card
-      onClick={() => {
-        updateIds(flow.data!);
-        addFlow({ flow }).then((id) => {
-          navigate(`/flow/${id}/folder/${folderIdUrl}`);
-        });
-      }}
+      onClick={() => handleFlowCardClick(flow, folderIdUrl!)}
       className="h-64 w-80 cursor-pointer bg-background pt-4"
     >
       <CardContent className="h-full w-full">

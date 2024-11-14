@@ -1,13 +1,16 @@
+import { GetCodeType } from "@/types/tweaks";
+
 /**
  * Function to get the python code for the API
  * @param {string} flow - The current flow
  * @param {any[]} tweaksBuildedObject - The tweaks
  * @returns {string} - The python code
  */
-export default function getPythonCode(
-  flowName: string,
-  tweaksBuildedObject: {},
-): string {
+export default function getPythonCode({
+  flowName,
+  tweaksBuildedObject,
+  activeTweaks,
+}: GetCodeType): string {
   let tweaksString = "{}";
   if (tweaksBuildedObject)
     tweaksString = JSON.stringify(tweaksBuildedObject, null, 2)
@@ -19,7 +22,7 @@ export default function getPythonCode(
 TWEAKS = ${tweaksString}
 
 result = run_flow_from_json(flow="${flowName}.json",
-                            input_value="message",
+                            ${!activeTweaks ? `input_value="message",\n                            ` : ""}session_id="", # provide a session id if you want to use session state
                             fallback_to_env_vars=True, # False by default
                             tweaks=TWEAKS)`;
 }
