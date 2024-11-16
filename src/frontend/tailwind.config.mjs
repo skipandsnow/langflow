@@ -282,6 +282,9 @@ const config = {
         100: "100",
         999: "999",
       },
+      backgroundImage: {
+        'ctbc-bg': "url('../assets/bg-ctbc.jpg')",
+      },
     },
   },
 

@@ -88,7 +88,7 @@ export default function AppHeader(): JSX.Element {
                 window.open("https://github.com/langflow-ai/langflow", "_blank")
               }
             >
-              <GithubStarComponent />
+              {/* <GithubStarComponent /> */}
             </Button>
           </>
         )}

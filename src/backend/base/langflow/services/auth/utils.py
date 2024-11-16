@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import os
 import random
 import warnings
 from collections.abc import Coroutine
@@ -11,6 +12,7 @@ from cryptography.fernet import Fernet
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import APIKeyHeader, APIKeyQuery, OAuth2PasswordBearer
 from jose import JWTError, jwt
+from ldap3 import Connection, Server
 from loguru import logger
 from sqlmodel import Session
 from starlette.websockets import WebSocket
@@ -188,6 +190,44 @@ def verify_password(plain_password, hashed_password):
     return settings_service.auth_settings.pwd_context.verify(plain_password, hashed_password)
 
 
+def verify_password_from_ldap(username, user_password) -> bool:
+    # Set username to lower case
+    username = username.lower()
+
+    # Set up LDAP server connection information
+    server_uri = os.getenv("LANGFLOW_LDAP_SERVER_HOST", "localhost")
+    manager_dn = os.getenv("LANGFLOW_LDAP_MANAGER_DN", "cn=admin,dc=example,dc=org")
+    manager_password = os.getenv("LANGFLOW_LDAP_MANAGER_PASSWORD", "manager_password")
+    user_search_base = os.getenv("LANGFLOW_LDAP_SEARCH_BASE", "ou=users,dc=example,dc=org")
+
+    # Establish a connection to the LDAP server
+    server = Server(server_uri)
+    conn = Connection(server, manager_dn, manager_password)
+    try:
+        # Bind as the manager
+        if not conn.bind():
+            logger.debug("Error: Could not bind as manager.")
+            return False
+
+        # Search for the user's dn
+        conn.search(user_search_base, f"(uid={username})", attributes=["cn"])
+        if not conn.entries:
+            logger.debug("Error: User not found.")
+            return False
+        user_dn = conn.entries[0].entry_dn
+
+        # Attempt to bind as the user
+        user_conn = Connection(server, user_dn, user_password)
+        if user_conn.bind():
+            logger.debug("Success: Password verified.")
+            return True
+        logger.debug("Error: Password verification failed.")
+        return False
+    finally:
+        # Ensure the connection is closed
+        conn.unbind()
+
+
 def get_password_hash(password):
     settings_service = get_settings_service()
     return settings_service.auth_settings.pwd_context.hash(password)
@@ -340,7 +380,7 @@ def authenticate_user(username: str, password: str, db: Session) -> User | None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Waiting for approval")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user")
 
-    return user if verify_password(password, user.password) else None
+    return user if verify_password_from_ldap(username, password) else None
 
 
 def add_padding(s):

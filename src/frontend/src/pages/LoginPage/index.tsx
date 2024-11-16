@@ -16,6 +16,8 @@ import {
   inputHandlerEventType,
   loginInputStateType,
 } from "../../types/components";
+// Add CTBC logo
+import logoCtbc from "../../assets/logo-ctbc.png";
 
 export default function LoginPage(): JSX.Element {
   const [inputState, setInputState] =
@@ -65,23 +67,24 @@ export default function LoginPage(): JSX.Element {
       }}
       className="h-screen w-full"
     >
-      <div className="flex h-full w-full flex-col items-center justify-center bg-muted">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-muted bg-ctbc-bg">
         <div className="flex w-72 flex-col items-center justify-center gap-2">
           {ENABLE_NEW_LOGO ? (
-            <LangflowLogo
-              title="Langflow logo"
-              className="mb-4 h-10 w-10 scale-[1.5]"
-            />
+            <img src={logoCtbc} alt="CTBC Logo" className="mb-4 h-20" />
+            // <LangflowLogo
+            //   title="Langflow logo"
+            //   className="mb-4 h-10 w-10 scale-[1.5]"
+            // />
           ) : (
             <span className="mb-4 text-5xl">⛓️</span>
           )}
-          <span className="mb-6 text-2xl font-semibold text-primary">
-            Sign in to Langflow
+          <span className="mb-6 text-4xl font-extrabold text-primary">
+            創意發想平台
           </span>
           <div className="mb-3 w-full">
             <Form.Field name="username">
               <Form.Label className="data-[invalid]:label-invalid">
-                Username <span className="font-medium text-destructive">*</span>
+                員工編號 <span className="font-medium text-destructive">*</span>
               </Form.Label>
 
               <Form.Control asChild>
@@ -98,14 +101,14 @@ export default function LoginPage(): JSX.Element {
               </Form.Control>
 
               <Form.Message match="valueMissing" className="field-invalid">
-                Please enter your username
+                請輸入員工編號
               </Form.Message>
             </Form.Field>
           </div>
           <div className="mb-3 w-full">
             <Form.Field name="password">
               <Form.Label className="data-[invalid]:label-invalid">
-                Password <span className="font-medium text-destructive">*</span>
+                密碼 <span className="font-medium text-destructive">*</span>
               </Form.Label>
 
               <InputComponent
@@ -121,21 +124,21 @@ export default function LoginPage(): JSX.Element {
               />
 
               <Form.Message className="field-invalid" match="valueMissing">
-                Please enter your password
+                請輸入密碼
               </Form.Message>
             </Form.Field>
           </div>
           <div className="w-full">
             <Form.Submit asChild>
               <Button className="mr-3 mt-6 w-full" type="submit">
-                Sign in
+                登入
               </Button>
             </Form.Submit>
           </div>
           <div className="w-full">
             <CustomLink to="/signup">
-              <Button className="w-full" variant="outline" type="button">
-                Don't have an account?&nbsp;<b>Sign Up</b>
+              <Button className="w-full" variant="primary" type="button">
+                還沒有註冊小達嗎?&nbsp;<b>註冊</b>
               </Button>
             </CustomLink>
           </div>

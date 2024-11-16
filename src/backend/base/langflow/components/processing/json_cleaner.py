@@ -72,7 +72,8 @@ class JSONCleaner(Component):
             if validate_json:
                 json_str = self._validate_json(json_str)
 
-            cleaned_json_str = repair_json(json_str)
+            # fix traditional Chinese characters convertion errors
+            cleaned_json_str = repair_json(json_str, return_objects=True)
             result = str(cleaned_json_str)
 
             self.status = result

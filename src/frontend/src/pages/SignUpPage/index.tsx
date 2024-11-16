@@ -20,6 +20,8 @@ import {
   inputHandlerEventType,
   signUpInputStateType,
 } from "../../types/components";
+// Add CTBC logo
+import logoCtbc from "../../assets/logo-ctbc.png";
 
 export default function SignUp(): JSX.Element {
   const [inputState, setInputState] =
@@ -41,8 +43,8 @@ export default function SignUp(): JSX.Element {
   }
 
   useEffect(() => {
-    if (password !== cnfPassword) return setDisableBtn(true);
-    if (password === "" || cnfPassword === "") return setDisableBtn(true);
+    // if (password !== cnfPassword) return setDisableBtn(true);
+    // if (password === "" || cnfPassword === "") return setDisableBtn(true);
     if (username === "") return setDisableBtn(true);
     setDisableBtn(false);
   }, [password, cnfPassword, username, handleInput]);
@@ -89,23 +91,24 @@ export default function SignUp(): JSX.Element {
       }}
       className="h-screen w-full"
     >
-      <div className="flex h-full w-full flex-col items-center justify-center bg-muted">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-muted bg-ctbc-bg">
         <div className="flex w-72 flex-col items-center justify-center gap-2">
           {ENABLE_NEW_LOGO ? (
-            <LangflowLogo
-              title="Langflow logo"
-              className="mb-4 h-10 w-10 scale-[1.5]"
-            />
+            // <LangflowLogo
+            //   title="Langflow logo"
+            //   className="mb-4 h-10 w-10 scale-[1.5]"
+            // />
+            <img src={logoCtbc} alt="CTBC Logo" className="mb-4 h-20" />
           ) : (
             <span className="mb-4 text-5xl">⛓️</span>
           )}
-          <span className="mb-6 text-2xl font-semibold text-primary">
-            Sign up for Langflow
+          <span className="mb-6 text-4xl font-extrabold text-primary">
+            註冊創意發想平台
           </span>
           <div className="mb-3 w-full">
             <Form.Field name="username">
               <Form.Label className="data-[invalid]:label-invalid">
-                Username <span className="font-medium text-destructive">*</span>
+                員工編號 <span className="font-medium text-destructive">*</span>
               </Form.Label>
 
               <Form.Control asChild>
@@ -122,14 +125,14 @@ export default function SignUp(): JSX.Element {
               </Form.Control>
 
               <Form.Message match="valueMissing" className="field-invalid">
-                Please enter your username
+                請輸入員工編號
               </Form.Message>
             </Form.Field>
           </div>
-          <div className="mb-3 w-full">
+          {/* <div className="mb-3 w-full">
             <Form.Field name="password" serverInvalid={password != cnfPassword}>
               <Form.Label className="data-[invalid]:label-invalid">
-                Password <span className="font-medium text-destructive">*</span>
+               密碼 <span className="font-medium text-destructive">*</span>
               </Form.Label>
               <InputComponent
                 onChange={(value) => {
@@ -144,12 +147,12 @@ export default function SignUp(): JSX.Element {
               />
 
               <Form.Message className="field-invalid" match="valueMissing">
-                Please enter a password
+                請輸入密碼
               </Form.Message>
 
               {password != cnfPassword && (
                 <Form.Message className="field-invalid">
-                  Passwords do not match
+                  密碼不同，請重新輸入
                 </Form.Message>
               )}
             </Form.Field>
@@ -160,7 +163,7 @@ export default function SignUp(): JSX.Element {
               serverInvalid={password != cnfPassword}
             >
               <Form.Label className="data-[invalid]:label-invalid">
-                Confirm your password{" "}
+                請再次輸入您的密碼{" "}
                 <span className="font-medium text-destructive">*</span>
               </Form.Label>
 
@@ -172,15 +175,15 @@ export default function SignUp(): JSX.Element {
                 isForm
                 password={true}
                 required
-                placeholder="Confirm your password"
+                placeholder="請再次輸入您的密碼"
                 className="w-full"
               />
 
               <Form.Message className="field-invalid" match="valueMissing">
-                Please confirm your password
+                請確認您的密碼
               </Form.Message>
             </Form.Field>
-          </div>
+          </div> */}
           <div className="w-full">
             <Form.Submit asChild>
               <Button
@@ -191,14 +194,14 @@ export default function SignUp(): JSX.Element {
                   handleSignup();
                 }}
               >
-                Sign up
+                註冊
               </Button>
             </Form.Submit>
           </div>
           <div className="w-full">
             <CustomLink to="/login">
-              <Button className="w-full" variant="outline">
-                Already have an account?&nbsp;<b>Sign in</b>
+              <Button className="w-full" variant="primary">
+                已經有帳號了嗎?&nbsp;<b>登入</b>
               </Button>
             </CustomLink>
           </div>
