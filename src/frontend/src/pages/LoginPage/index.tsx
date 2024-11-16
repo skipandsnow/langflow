@@ -80,11 +80,12 @@ export default function LoginPage(): JSX.Element {
           )}
           <span className="mb-6 text-4xl font-extrabold text-primary">
             創意發想平台
+              <span className="font-bold text-sm">數位科技處</span>
           </span>
           <div className="mb-3 w-full">
             <Form.Field name="username">
-              <Form.Label className="data-[invalid]:label-invalid">
-                員工編號 <span className="font-medium text-destructive">*</span>
+              <Form.Label className="data-[invalid]:label-invalid font-bold">
+                員工編號 <span className="font-bold text-destructive">*</span>
               </Form.Label>
 
               <Form.Control asChild>
@@ -107,8 +108,8 @@ export default function LoginPage(): JSX.Element {
           </div>
           <div className="mb-3 w-full">
             <Form.Field name="password">
-              <Form.Label className="data-[invalid]:label-invalid">
-                密碼 <span className="font-medium text-destructive">*</span>
+              <Form.Label className="data-[invalid]:label-invalid font-bold">
+                「測試」環境密碼 <span className="font-medium text-destructive">*</span>
               </Form.Label>
 
               <InputComponent

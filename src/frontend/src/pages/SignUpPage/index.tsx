@@ -103,11 +103,11 @@ export default function SignUp(): JSX.Element {
             <span className="mb-4 text-5xl">⛓️</span>
           )}
           <span className="mb-6 text-4xl font-extrabold text-primary">
-            註冊創意發想平台
+            註冊<span className="font-bold text-lg">創意發想平台</span>
           </span>
           <div className="mb-3 w-full">
             <Form.Field name="username">
-              <Form.Label className="data-[invalid]:label-invalid">
+              <Form.Label className="data-[invalid]:label-invalid font-bold">
                 員工編號 <span className="font-medium text-destructive">*</span>
               </Form.Label>
 
