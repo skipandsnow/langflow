@@ -198,7 +198,7 @@ class APIRequestComponent(Component):
 
         urls = [self.add_query_params(url, query_params) for url in urls]
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=False) as client:  # noqa: S501
             results = await asyncio.gather(
                 *[
                     self.make_request(client, method, u, headers, rec, timeout)

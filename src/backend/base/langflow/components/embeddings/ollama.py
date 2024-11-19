@@ -21,7 +21,7 @@ class OllamaEmbeddingsComponent(LCModelComponent):
         MessageTextInput(
             name="base_url",
             display_name="Ollama Base URL",
-            value="http://localhost:11434",
+            value="http://ollama:11434",
         ),
         FloatInput(
             name="temperature",
@@ -37,11 +37,7 @@ class OllamaEmbeddingsComponent(LCModelComponent):
 
     def build_embeddings(self) -> Embeddings:
         try:
-            output = OllamaEmbeddings(
-                model=self.model,
-                base_url=self.base_url,
-                temperature=self.temperature,
-            )
+            output = OllamaEmbeddings(model=self.model, base_url=self.base_url)
         except Exception as e:
             msg = "Could not connect to Ollama API."
             raise ValueError(msg) from e

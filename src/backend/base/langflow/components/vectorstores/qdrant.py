@@ -23,7 +23,7 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
 
     inputs = [
         StrInput(name="collection_name", display_name="Collection Name", required=True),
-        StrInput(name="host", display_name="Host", value="localhost", advanced=True),
+        StrInput(name="host", display_name="Host", value="qdrant", advanced=True),
         IntInput(name="port", display_name="Port", value=6333, advanced=True),
         IntInput(name="grpc_port", display_name="gRPC Port", value=6334, advanced=True),
         SecretStrInput(name="api_key", display_name="API Key", advanced=True),

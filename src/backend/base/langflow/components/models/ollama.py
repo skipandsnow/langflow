@@ -42,7 +42,7 @@ class ChatOllamaComponent(LCModelComponent):
             if base_url_load_from_db:
                 base_url_value = self.variables(base_url_value, field_name)
             elif not base_url_value:
-                base_url_value = "http://localhost:11434"
+                base_url_value = "http://ollama:11434"
             build_config["model_name"]["options"] = self.get_model(base_url_value)
         if field_name == "keep_alive_flag":
             if field_value == "Keep":
@@ -73,8 +73,8 @@ class ChatOllamaComponent(LCModelComponent):
         StrInput(
             name="base_url",
             display_name="Base URL",
-            info="Endpoint of the Ollama API. Defaults to 'http://localhost:11434' if not specified.",
-            value="http://localhost:11434",
+            info="Endpoint of the Ollama API. Defaults to 'http://ollama:11434' if not specified.",
+            value="http://ollama:11434",
         ),
         DropdownInput(
             name="model_name",
