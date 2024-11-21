@@ -727,7 +727,7 @@
                 "input_types": [
                   "Message"
                 ],
-                "load_from_db": true,
+                "load_from_db": false,
                 "name": "api_key",
                 "password": true,
                 "placeholder": "",
@@ -1340,7 +1340,7 @@
                 "input_types": [
                   "Message"
                 ],
-                "load_from_db": true,
+                "load_from_db": false,
                 "name": "api_key",
                 "password": true,
                 "placeholder": "",
@@ -3202,7 +3202,7 @@
                 "input_types": [
                   "Message"
                 ],
-                "load_from_db": true,
+                "load_from_db": false,
                 "name": "api_key",
                 "password": true,
                 "placeholder": "",
@@ -3748,9 +3748,9 @@
   },
   "description": "This Agent is designed to systematically execute a series of tasks following a meticulously predefined sequence. By adhering to this structured order, the Agent ensures that each task is completed efficiently and effectively, optimizing overall performance and maintaining a high level of accuracy.",
   "endpoint_name": null,
+  "gradient": "1",
   "icon": "ListChecks",
   "id": "673f26a7-66f4-410a-8ccb-3e635c022023",
-  "gradient": "1",
   "is_component": false,
   "last_tested_version": "1.0.19.post2",
   "name": "Sequential Tasks Agents",

@@ -74,6 +74,7 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
             "timeout": int(self.timeout) if self.timeout else None,
             "path": self.path or None,
             "url": self.url or None,
+            "https": False,
         }
 
         server_kwargs = {k: v for k, v in server_kwargs.items() if v is not None}

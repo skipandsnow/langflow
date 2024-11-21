@@ -1,0 +1,63 @@
+version: '3.1'
+
+services:
+    langflow-backend:
+        depends_on:
+          - postgres
+        image: langflow:v1.1.0c
+        restart: always
+        deploy:
+            replicas: 5
+        environment:
+            - LANGFLOW_CONFIG_DIR=${LANGFLOW_CONFIG_DIR}
+            - LANGFLOW_SAVE_DB_IN_CONFIG_DIR=${LANGFLOW_SAVE_DB_IN_CONFIG_DIR}
+            - LANGFLOW_AUTO_LOGIN=${LANGFLOW_AUTO_LOGIN}
+            - LANGFLOW_SUPERUSER=${LANGFLOW_SUPERUSER}
+            - LANGFLOW_SUPERUSER_PASSWORD=${LANGFLOW_SUPERUSER_PASSWORD}
+            - LANGFLOW_DATABASE_URL=${LANGFLOW_DATABASE_URL}
+            - LANGFLOW_DEFAULT_LOCALE=${LANGFLOW_DEFAULT_LOCALE}
+            - LANGFLOW_STORE=${LANGFLOW_STORE}
+            - LANGFLOW_LDAP_AUTH=${LANGFLOW_LDAP_AUTH}
+            - DO_NOT_TRACK=${DO_NOT_TRACK}
+            - LANGFLOW_LDAP_SERVER_HOST=${LANGFLOW_LDAP_SERVER_HOST}
+            - LANGFLOW_LDAP_MANAGER_DN=${LANGFLOW_LDAP_MANAGER_DN}
+            - DATABASE_USER=${DATABASE_USER}
+            - LANGFLOW_LDAP_MANAGER_PASSWORD=${LANGFLOW_LDAP_MANAGER_PASSWORD}
+            - LANGFLOW_LDAP_SEARCH_BASE=${LANGFLOW_LDAP_SEARCH_BASE}
+        ports:
+            - '7860'
+        entrypoint: /bin/sh -c "langflow run --backend-only --port 7860 --host 0.0.0.0"
+    langflow-frontend:
+        image: langflow:v1.1.0c-frontend
+        restart: always
+        depends_on:
+          - langflow-backend
+        environment:
+            - BACKEND_URL=${BACKEND_URL}
+            - FRONTEND_PORT=${FRONTEND_PORT}
+        ports:
+            - '7860:7860'
+    postgres:
+        image: bitnami/postgresql:16.4.0
+        restart: always
+        environment:
+            - POSTGRESQL_USERNAME=llm
+            - POSTGRESQL_PASSWORD=llm
+        # volumes:
+        #   - postgresql:/bitnami/postgresql/
+        ports:
+            - '6339:5432'
+    openldap:
+        image: bitnami/openldap:latest
+        restart: always
+        environment:
+            - LDAP_ADMIN_USERNAME=admin
+            - LDAP_ADMIN_PASSWORD=admin
+            - LDAP_USERS=langflow_usr,skipandsnow,test
+            - LDAP_PASSWORDS=langflow_usr,skipandsnow,test
+            - LDAP_ROOT=dc=example,dc=org
+            - LDAP_ADMIN_DN=cn=admin,dc=example,dc=org
+        ports:
+            - '1389:1389'
+volumes:
+  postgresql:
